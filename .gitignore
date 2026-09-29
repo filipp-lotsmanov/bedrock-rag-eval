@@ -58,7 +58,9 @@ response.json
 
 # Local corpus - PDFs are not redistributable and are large.
 # Corpus is documented by DOI list in docs/, not committed.
-corpus/
+corpus/*
+!corpus/manifest.csv
+!corpus/query.json
 data/raw/
 
 # Editors

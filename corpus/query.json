@@ -1,0 +1,19 @@
+{
+  "fetched_at": "2026-09-29T16:10:53+00:00",
+  "journal": "Frontiers in Neuroscience",
+  "mindate": "2020",
+  "maxdate": "2025",
+  "filters": {
+    "is_pmc_openaccess": true,
+    "is_retracted": false,
+    "is_historical_ocr": false,
+    "license_code": [
+      "CC BY",
+      "CC0"
+    ]
+  },
+  "version_policy": "latest of 1..3",
+  "candidates": 30,
+  "accepted": 10,
+  "skipped": {}
+}
