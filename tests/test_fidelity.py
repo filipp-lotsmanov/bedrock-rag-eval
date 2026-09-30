@@ -56,18 +56,13 @@ def test_pruned_search_agrees_with_brute_force() -> None:
 
     for _ in range(500):
         needle = text(rng.randint(20, 60))
-        haystack = [
-            needle[: rng.randint(10, 60)] + text(rng.randint(0, 15)) for _ in range(5)
-        ]
+        haystack = [needle[: rng.randint(10, 60)] + text(rng.randint(0, 15)) for _ in range(5)]
         for threshold in (0.90, 0.95, 0.99):
             scores = [
-                difflib.SequenceMatcher(None, h, needle, autojunk=False).ratio()
-                for h in haystack
+                difflib.SequenceMatcher(None, h, needle, autojunk=False).ratio() for h in haystack
             ]
             reachable = [i for i, s in enumerate(scores) if s >= threshold]
-            expected = (
-                min(reachable, key=lambda i: (-scores[i], i)) if reachable else None
-            )
+            expected = min(reachable, key=lambda i: (-scores[i], i)) if reachable else None
             assert _best_match(needle, haystack, threshold) == expected
 
 

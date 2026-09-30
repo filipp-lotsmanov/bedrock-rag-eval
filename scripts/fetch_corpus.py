@@ -183,9 +183,7 @@ def main() -> None:
             continue
 
         try:
-            files = download_pair(
-                vid, pdf_dir / f"{pmcid}.pdf", xml_dir / f"{pmcid}.xml"
-            )
+            files = download_pair(vid, pdf_dir / f"{pmcid}.pdf", xml_dir / f"{pmcid}.xml")
         except urllib.error.HTTPError as exc:
             count(skipped, f"download_{exc.code}")
             continue

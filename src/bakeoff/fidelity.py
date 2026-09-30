@@ -157,9 +157,7 @@ def _best_match(needle: str, haystack: list[str], threshold: float) -> int | Non
     return best_index
 
 
-def recovery(
-    truth: list[str], extracted: list[str], threshold: float
-) -> tuple[float, list[int]]:
+def recovery(truth: list[str], extracted: list[str], threshold: float) -> tuple[float, list[int]]:
     """Fraction of ground-truth sentences found, plus their matched positions.
 
     The position list feeds order_score; both come from one pass so that the
