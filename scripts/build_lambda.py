@@ -79,7 +79,7 @@ def build(name: str, deps: list[str]) -> Path:
                 str(stage),
                 "--python-platform",
                 "aarch64-manylinux2014",
-                "--python-version",
+                "--.python-version",
                 python_version,
                 "--only-binary",
                 ":all:",
