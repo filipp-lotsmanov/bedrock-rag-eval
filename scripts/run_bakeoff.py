@@ -24,7 +24,7 @@ import statistics
 import subprocess
 import time
 from datetime import UTC, datetime
-from importlib.metadata import version
+from importlib.metadata import PackageNotFoundError, version
 from pathlib import Path
 from typing import Any
 
@@ -74,6 +74,22 @@ def score(truth: list[str], pages: list[str]) -> dict[str, Any]:
             order = order_score(matched)
             row[f"order_{round(threshold * 100)}"] = "" if math.isnan(order) else round(order, 4)
     return row
+
+
+RECORDED_PACKAGES = ("pypdf", "pdfplumber", "pdfminer.six", "fonttools", "pysbd")
+"""Everything that can change the numbers: parsers, their optional font
+support, and the sentence splitter."""
+
+
+def installed_versions() -> dict[str, str | None]:
+    """None marks a package that is not installed, which is itself a setting."""
+    out: dict[str, str | None] = {}
+    for name in RECORDED_PACKAGES:
+        try:
+            out[name] = version(name)
+        except PackageNotFoundError:
+            out[name] = None
+    return out
 
 
 def git_state() -> dict[str, Any]:
@@ -146,7 +162,7 @@ def main() -> None:
         "git": git_state(),
         "manifest_sha256": hashlib.sha256(manifest.read_bytes()).hexdigest(),
         "articles": len(articles),
-        "parsers": {name: version(name) for name in PARSERS},
+        "packages": installed_versions(),
         "python": platform.python_version(),
         "platform": platform.platform(),
         "thresholds": list(THRESHOLDS),
