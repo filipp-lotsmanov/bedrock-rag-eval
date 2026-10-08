@@ -23,37 +23,17 @@ import platform
 import statistics
 import subprocess
 import time
-from collections.abc import Callable
 from datetime import UTC, datetime
 from importlib.metadata import version
 from pathlib import Path
 from typing import Any
 
-import pdfplumber
-import pypdf
-
 from bakeoff import extract_ground_truth, order_score, recovery, split_sentences
+from bakeoff.parsers import PARSERS, Extractor
 
 THRESHOLDS = (0.90, 0.95, 0.99)
 ORDER_THRESHOLD = 0.95
 """order_score is computed from the matches at this threshold only."""
-
-Extractor = Callable[[Path], list[str]]
-
-
-def extract_pypdf(path: Path) -> list[str]:
-    return [page.extract_text() for page in pypdf.PdfReader(path).pages]
-
-
-def extract_pdfplumber(path: Path) -> list[str]:
-    with pdfplumber.open(path) as pdf:
-        return [page.extract_text() or "" for page in pdf.pages]
-
-
-PARSERS: dict[str, Extractor] = {
-    "pypdf": extract_pypdf,
-    "pdfplumber": extract_pdfplumber,
-}
 
 FIELDS = [
     "pmcid",
