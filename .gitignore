@@ -62,6 +62,7 @@ corpus/*
 !corpus/manifest.csv
 !corpus/query.json
 data/raw/
+results/
 
 # Editors
 .vscode/

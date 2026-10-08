@@ -7,7 +7,7 @@ Terraform handler = "<name>.handler.main".
 The zip is byte-for-byte reproducible: entries are sorted and written with
 a fixed timestamp and fixed permissions, so an unchanged build produces an
 unchanged source_code_hash and Terraform plans no redeploy. This holds across
-operating systems only if sources have LF line endings (..gitattributes).
+operating systems only if sources have LF line endings (.gitattributes).
 """
 
 import argparse
@@ -79,7 +79,7 @@ def build(name: str, deps: list[str]) -> Path:
                 str(stage),
                 "--python-platform",
                 "aarch64-manylinux2014",
-                "--.python-version",
+                "--python-version",
                 python_version,
                 "--only-binary",
                 ":all:",

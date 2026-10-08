@@ -34,6 +34,20 @@ def test_wrapped_pdf_sentence_is_one_sentence() -> None:
     ]
 
 
+def test_unpaired_quote_does_not_merge_sentences() -> None:
+    body = " ".join(f"This is sentence number {i} about zither practice." for i in range(6))
+    text = f"Learners lack \u201cbodily tools. {body} Later \u201ca quote\u201d ends it."
+    sentences = split_sentences(text)
+    assert len(sentences) == 8
+    assert max(len(s) for s in sentences) < 60
+
+
+def test_double_quotes_removed_apostrophes_kept() -> None:
+    assert normalise(unwrap("\u201cbodily tools\u201d of Alzheimer\u2019s")) == (
+        "bodily tools of alzheimer's"
+    )
+
+
 def test_short_fragments_are_dropped() -> None:
     assert split_sentences("Methods. Fig. 2.") == []
 

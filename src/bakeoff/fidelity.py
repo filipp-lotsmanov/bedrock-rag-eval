@@ -8,6 +8,10 @@ Normalisation decisions, all driven by artefacts observed in the corpus:
     NFKC                  folds ligatures and Greek variants
     quote/dash folding    NFKC leaves U+2019/201C/2013 alone; PDF extraction
                           may yield either curly or ASCII forms
+    double quotes dropped pysbd never splits between a pair of quotes, so one
+                          unpaired quote swallows everything up to the next.
+                          Observed in PMC12756423 (9 opening, 8 closing): one
+                          "sentence" held 30% of the article.
     hyphen-break join     'hippo-\\ncampus' -> 'hippocampus'; line-break
                           hyphenation is a layout artefact, not a failure.
                           Letters only, so '10-\\n20' stays a range.
@@ -46,9 +50,10 @@ _PUNCT_FOLD = str.maketrans(
         "\u2019": "'",
         "\u201a": "'",
         "\u201b": "'",
-        "\u201c": '"',
-        "\u201d": '"',
-        "\u201e": '"',
+        "\u201c": None,
+        "\u201d": None,
+        "\u201e": None,
+        '"': None,
         "\u2010": "-",
         "\u2011": "-",
         "\u2013": "-",

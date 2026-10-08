@@ -45,7 +45,8 @@ NETWORK_ERRORS = (urllib.error.URLError, TimeoutError)
 def get_json(url: str) -> dict[str, Any]:
     req = urllib.request.Request(url, headers=USER_AGENT)
     with urllib.request.urlopen(req, timeout=30) as resp:
-        return json.loads(resp.read())
+        data: dict[str, Any] = json.loads(resp.read())
+    return data
 
 
 def search_pmcids(journal: str, mindate: str, maxdate: str, retmax: int) -> list[str]:
