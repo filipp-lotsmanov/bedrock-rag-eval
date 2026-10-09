@@ -12,6 +12,7 @@ override.tf.json
 *_override.tf.json
 .terraformrc
 terraform.rc
+tfplan
 
 # Terraform variable values - may contain environment-specific or sensitive data.
 # Commit terraform.tfvars.example instead.
