@@ -24,10 +24,13 @@ dev = [
 
 # Parser bake-off: candidates plus the sentence splitter used by the metrics.
 # Drop the losing parser before week 2.
-parsing = [
+bakeoff = [
     "pdfplumber>=0.11",
     "pypdf[fonts]>=5.0",
     "pysbd>=0.3.4",
+]
+ingest = [
+    "pypdf[fonts]>=6.18.1",
 ]
 
 [build-system]

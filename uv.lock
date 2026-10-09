@@ -67,6 +67,11 @@ dependencies = [
 ]
 
 [package.dev-dependencies]
+bakeoff = [
+    { name = "pdfplumber" },
+    { name = "pypdf", extra = ["fonts"] },
+    { name = "pysbd" },
+]
 dev = [
     { name = "boto3-stubs", extra = ["bedrock-agent-runtime", "bedrock-runtime", "s3"] },
     { name = "moto", extra = ["s3"] },
@@ -77,10 +82,8 @@ dev = [
     { name = "ruff" },
     { name = "types-pyyaml" },
 ]
-parsing = [
-    { name = "pdfplumber" },
+ingest = [
     { name = "pypdf", extra = ["fonts"] },
-    { name = "pysbd" },
 ]
 
 [package.metadata]
@@ -92,6 +95,11 @@ requires-dist = [
 ]
 
 [package.metadata.requires-dev]
+bakeoff = [
+    { name = "pdfplumber", specifier = ">=0.11" },
+    { name = "pypdf", extras = ["fonts"], specifier = ">=5.0" },
+    { name = "pysbd", specifier = ">=0.3.4" },
+]
 dev = [
     { name = "boto3-stubs", extras = ["bedrock-agent-runtime", "bedrock-runtime", "s3"], specifier = ">=1.35.0" },
     { name = "moto", extras = ["s3"], specifier = ">=5.0" },
@@ -102,11 +110,7 @@ dev = [
     { name = "ruff", specifier = ">=0.6" },
     { name = "types-pyyaml", specifier = ">=6.0" },
 ]
-parsing = [
-    { name = "pdfplumber", specifier = ">=0.11" },
-    { name = "pypdf", extras = ["fonts"], specifier = ">=5.0" },
-    { name = "pysbd", specifier = ">=0.3.4" },
-]
+ingest = [{ name = "pypdf", extras = ["fonts"], specifier = ">=6.18.1" }]
 
 [[package]]
 name = "boto3"
