@@ -110,7 +110,12 @@ def test_summary_rates_and_denominators() -> None:
         and summary["correct_abstention"]["denominator"] == 2
     )
     assert summary["citation_validity"] == {"value": 0.75, "numerator": 3, "denominator": 4}
-    assert summary["premise_handling"]["ungraded"] == 1
+    assert summary["premise_handling"] == {
+        "value": None,
+        "numerator": 0,
+        "denominator": 0,
+        "ungraded": 1,
+    }
 
 
 def test_latest_successful_result_wins(tmp_path: Path) -> None:

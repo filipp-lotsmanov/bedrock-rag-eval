@@ -10,7 +10,8 @@ Definitions (answerable = category "answerable"):
     mrr                  answerable: mean of 1 / rank of the first page hit (0 when none)
     answer_rate          answerable: share answered rather than abstained
     correct_abstention   not_covered and off_topic: share abstained
-    premise_handling     false_premise: share abstained or graded as correcting the premise
+    premise_handling     false_premise: share abstained or graded as correcting the premise,
+                         among those graded; ungraded replies are counted separately
     citation_validity    answered questions: share citing only passages that were shown
     citation_on_evidence answered answerable: share with a citation on an expected page.
                          A lower bound: a citation elsewhere can still be valid support.
@@ -112,7 +113,8 @@ def summarize(rows: list[dict[str, Any]], k: int) -> dict[str, Any]:
         },
         "answer_rate": rate(sum(not r["abstained"] for r in answerable), len(answerable)),
         "correct_abstention": rate(sum(r["abstained"] for r in refusable), len(refusable)),
-        "premise_handling": rate(sum(bool(r["premise_correct"]) for r in graded), len(premises))
+        # Ungraded replies are excluded from the rate and reported separately.
+        "premise_handling": rate(sum(bool(r["premise_correct"]) for r in graded), len(graded))
         | {"ungraded": len(premises) - len(graded)},
         "citation_validity": rate(sum(r["citation_valid"] for r in answered), len(answered)),
         "citation_on_evidence": rate(sum(r["citation_on_evidence"] for r in cited), len(cited)),
