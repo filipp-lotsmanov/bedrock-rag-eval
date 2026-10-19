@@ -1,0 +1,568 @@
+# Evaluation questions for bedrock-rag-eval.
+# Drafted by Claude (Anthropic) from the cleaned text of the corpus, then reviewed by the author.
+# Every evidence quote is machine-checked against the cleaned page it cites
+# (scripts/check_questions.py). Pages are PDF page numbers, matching page_start/page_end.
+#
+# category:          answerable | not_covered | false_premise | off_topic
+# expected_behavior: answer | abstain | correct_premise
+# type:              factoid | numeric | paraphrase | multi_passage | unanswerable
+# review:            pending | accepted | edited | dropped
+
+- id: q01
+  question: "Which gut microbe was used to infect the cultured intestinal and neuronal cells?"
+  category: answerable
+  expected_behavior: answer
+  expected_docs: [PMC12756163]
+  expected_pages: [2]
+  answer_sketch: "Desulfovibrio vulgaris (DSV), strain Hildenborough (ATCC 29579)."
+  evidence:
+    - {doc_id: PMC12756163, page: 2, quote: "Desulfovibrio vulgaris Hildenborough (ATCC 29579, Manassas, VA)"}
+  type: paraphrase
+  difficulty: easy
+  source: claude-drafted
+  review: accepted
+
+- id: q02
+  question: "By roughly how much did DSV infection reduce tyrosine hydroxylase expression in SH-SY5Y cells?"
+  category: answerable
+  expected_behavior: answer
+  expected_docs: [PMC12756163]
+  expected_pages: [5]
+  answer_sketch: "About 35-40% inhibition (fold change 0.65 at MOI 60 and 0.59 at MOI 80 versus control)."
+  evidence:
+    - {doc_id: PMC12756163, page: 5, quote: "35–40% inhibition was observed in TH expression"}
+  type: numeric
+  difficulty: medium
+  source: claude-drafted
+  review: accepted
+
+- id: q03
+  question: "After a single bacterial gavage, in which parts of the mouse intestine did alpha-synuclein not rise?"
+  category: answerable
+  expected_behavior: answer
+  expected_docs: [PMC12756163]
+  expected_pages: [6]
+  answer_sketch: "The ileum and the colon; only the duodenum showed a significant increase."
+  evidence:
+    - {doc_id: PMC12756163, page: 6, quote: "we did not find increase in α-syn levels in the ileum or the colon"}
+  type: paraphrase
+  difficulty: hard
+  source: claude-drafted
+  review: accepted
+
+- id: q04
+  question: "How many zither students were in the final experimental and control groups?"
+  category: answerable
+  expected_behavior: answer
+  expected_docs: [PMC12756423]
+  expected_pages: [6]
+  answer_sketch: "32 in the experimental group and 31 in the control group (63 in total), after attrition from 66."
+  evidence:
+    - {doc_id: PMC12756423, page: 6, quote: "the final control group comprised 31 participants"}
+  type: numeric
+  difficulty: easy
+  source: claude-drafted
+  review: accepted
+
+- id: q05
+  question: "Which two traditional microtones did the intonation test focus on?"
+  category: answerable
+  expected_behavior: answer
+  expected_docs: [PMC12756423]
+  expected_pages: [7]
+  answer_sketch: "FA+ (slightly raised Fa) and TI- (slightly lowered Ti), the two pitches that require pressing on the zither."
+  evidence:
+    - {doc_id: PMC12756423, page: 7, quote: "Items 1–2 test the intonation of pitch FA+"}
+  type: factoid
+  difficulty: medium
+  source: claude-drafted
+  review: accepted
+
+- id: q06
+  question: "How many experimental-group participants answered test item 2 correctly before and after the training?"
+  category: answerable
+  expected_behavior: answer
+  expected_docs: [PMC12756423]
+  expected_pages: [8]
+  answer_sketch: "Zero before training and 21 after training; item 2 (pitch FA+) was the most challenging."
+  evidence:
+    - {doc_id: PMC12756423, page: 8, quote: "increased from zero before training to 21 after training"}
+  type: numeric
+  difficulty: medium
+  source: claude-drafted
+  review: accepted
+
+- id: q07
+  question: "Did gender, age, or length of study significantly affect how much the learners' intonation improved?"
+  category: answerable
+  expected_behavior: answer
+  expected_docs: [PMC12756423]
+  expected_pages: [9]
+  answer_sketch: "No. Gender (p = 0.312), age group (p = 0.104) and years of study (p = 0.388) were all non-significant."
+  evidence:
+    - {doc_id: PMC12756423, page: 9, quote: "gender did not have a statistically significant impact on intonation improvement"}
+    - {doc_id: PMC12756423, page: 9, quote: "did not have a statistically significant effect on intonation improvement either"}
+  type: multi_passage
+  difficulty: hard
+  source: claude-drafted
+  review: accepted
+
+- id: q08
+  question: "Which skull-stripping tool did the authors recommend for pediatric T2-weighted MRI scans?"
+  category: answerable
+  expected_behavior: answer
+  expected_docs: [PMC12756446]
+  expected_pages: [1]
+  answer_sketch: "SynthStrip, for its robustness and quick computation time."
+  evidence:
+    - {doc_id: PMC12756446, page: 1, quote: "we recommend SynthStrip for skull stripping of pediatric T2-weighted MRI scans"}
+  type: factoid
+  difficulty: easy
+  source: claude-drafted
+  review: accepted
+
+- id: q09
+  question: "On average, how long did HD-BET take per scan compared with SynthStrip?"
+  category: answerable
+  expected_behavior: answer
+  expected_docs: [PMC12756446]
+  expected_pages: [6]
+  answer_sketch: "HD-BET took about 132 s per scan; SynthStrip took about 7 s."
+  evidence:
+    - {doc_id: PMC12756446, page: 6, quote: "HD-BET (M = 132 s, SD = 0.83)"}
+  type: numeric
+  difficulty: medium
+  source: claude-drafted
+  review: accepted
+
+- id: q10
+  question: "Which tool's segmentation accuracy got steadily worse the older the children were?"
+  category: answerable
+  expected_behavior: answer
+  expected_docs: [PMC12756446]
+  expected_pages: [8]
+  answer_sketch: "BET: its Dice score fell with age (Pearson r = -0.734), from 0.950 under one year to 0.857 in the fifth year."
+  evidence:
+    - {doc_id: PMC12756446, page: 8, quote: "BET showed a strong correlation with the covariate age"}
+  type: paraphrase
+  difficulty: hard
+  source: claude-drafted
+  review: accepted
+
+- id: q11
+  question: "What was the volume of the brainstem hemorrhage in the case report?"
+  category: answerable
+  expected_behavior: answer
+  expected_docs: [PMC12756476]
+  expected_pages: [1]
+  answer_sketch: "10.3 mL on CT."
+  evidence:
+    - {doc_id: PMC12756476, page: 1, quote: "CT imaging revealed a 10.3 mL brainstem hemorrhage"}
+  type: numeric
+  difficulty: easy
+  source: claude-drafted
+  review: accepted
+
+- id: q12
+  question: "Which antibiotics were given after the Acinetobacter infection recurred in the third postoperative week?"
+  category: answerable
+  expected_behavior: answer
+  expected_docs: [PMC12756476]
+  expected_pages: [2]
+  answer_sketch: "Polymyxin B combined with meropenem (extended 3-hour infusion), for two weeks."
+  evidence:
+    - {doc_id: PMC12756476, page: 2, quote: "the antimicrobial therapy was escalated to polymyxin B"}
+  type: factoid
+  difficulty: medium
+  source: claude-drafted
+  review: accepted
+
+- id: q13
+  question: "Two months after the bleed, what lasting deficits did the patient still have?"
+  category: answerable
+  expected_behavior: answer
+  expected_docs: [PMC12756476]
+  expected_pages: [2]
+  answer_sketch: "Motor aphasia, severe dysphagia with nasogastric feeding, neurogenic bladder and bowel dysfunction, tracheostomy dependence; modified Rankin Scale 5."
+  evidence:
+    - {doc_id: PMC12756476, page: 2, quote: "including motor aphasia, severe dysphagia"}
+  type: paraphrase
+  difficulty: medium
+  source: claude-drafted
+  review: accepted
+
+- id: q14
+  question: "At which vertebral level was the cerebrospinal fluid leak suspected to be?"
+  category: answerable
+  expected_behavior: answer
+  expected_docs: [PMC12756487]
+  expected_pages: [2]
+  answer_sketch: "At the T1-2 level, where an osteophyte potentially pierced the dura."
+  evidence:
+    - {doc_id: PMC12756487, page: 2, quote: "the potential location of the CSF leak may at the T1-2 osteophyte level"}
+  type: factoid
+  difficulty: medium
+  source: claude-drafted
+  review: accepted
+
+- id: q15
+  question: "How much autologous blood was injected cephalad during the first epidural blood patch?"
+  category: answerable
+  expected_behavior: answer
+  expected_docs: [PMC12756487]
+  expected_pages: [2]
+  answer_sketch: "13 mL cephalad, plus 5 mL under pressure through the distal catheter and 7 mL caudally."
+  evidence:
+    - {doc_id: PMC12756487, page: 2, quote: "A total of 13 mL autologous venous blood was injected cephalad"}
+  type: numeric
+  difficulty: medium
+  source: claude-drafted
+  review: accepted
+
+- id: q16
+  question: "Why are subdural hematomas behind the clivus so rare?"
+  category: answerable
+  expected_behavior: answer
+  expected_docs: [PMC12756487]
+  expected_pages: [3]
+  answer_sketch: "The retroclival subdural space is a real, confined compartment between the clival dura and a dense arachnoid layer; it is poorly vascularized, and small bleeds drain into the spinal subdural space."
+  evidence:
+    - {doc_id: PMC12756487, page: 3, quote: "confined compartment"}
+    - {doc_id: PMC12756487, page: 3, quote: "The limited vascularization of this space further restricts hemorrhage"}
+  type: multi_passage
+  difficulty: hard
+  source: claude-drafted
+  review: accepted
+
+- id: q17
+  question: "What share of patients with anterior choroidal artery infarction developed early neurological deterioration?"
+  category: answerable
+  expected_behavior: answer
+  expected_docs: [PMC12756492]
+  expected_pages: [1]
+  answer_sketch: "78 of 206 patients (37.86%)."
+  evidence:
+    - {doc_id: PMC12756492, page: 1, quote: "Among 206 enrolled patients, 78 (37.86%) developed END"}
+  type: numeric
+  difficulty: easy
+  source: claude-drafted
+  review: accepted
+
+- id: q18
+  question: "Which deep learning tools were used to reconstruct and then segment the clinical T1-weighted images?"
+  category: answerable
+  expected_behavior: answer
+  expected_docs: [PMC12756492]
+  expected_pages: [1]
+  answer_sketch: "SynthSR for reconstruction into standardized high-resolution images, then AssemblyNet for automated tissue segmentation."
+  evidence:
+    - {doc_id: PMC12756492, page: 1, quote: "using the SynthSR deep learning algorithm"}
+    - {doc_id: PMC12756492, page: 1, quote: "segmentation via AssemblyNet"}
+  type: factoid
+  difficulty: medium
+  source: claude-drafted
+  review: accepted
+
+- id: q19
+  question: "Which brain atrophy metric discriminated best between patients with and without deterioration, and with what AUC?"
+  category: answerable
+  expected_behavior: answer
+  expected_docs: [PMC12756492]
+  expected_pages: [7]
+  answer_sketch: "White matter fraction, AUC 0.73 (optimal cutoff 0.302); CSF fraction had the best overall accuracy (71%)."
+  evidence:
+    - {doc_id: PMC12756492, page: 7, quote: "white matter fraction possessed the highest discriminative ability, with an AUC of 0.73"}
+  type: numeric
+  difficulty: hard
+  source: claude-drafted
+  review: accepted
+
+- id: q20
+  question: "How many UWS and MCS patients did the algorithm identify as representative?"
+  category: answerable
+  expected_behavior: answer
+  expected_docs: [PMC12756502]
+  expected_pages: [1]
+  answer_sketch: "31 of 58 UWS patients and 23 of 30 MCS patients, classified with 90.2% average accuracy."
+  evidence:
+    - {doc_id: PMC12756502, page: 1, quote: "Thirty-one out of 58 UWS patients and 23 out of 30 MCS patients"}
+  type: numeric
+  difficulty: easy
+  source: claude-drafted
+  review: accepted
+
+- id: q21
+  question: "How high can the misdiagnosis rate for disorders of consciousness get when it relies on clinical consensus alone?"
+  category: answerable
+  expected_behavior: answer
+  expected_docs: [PMC12756502]
+  expected_pages: [2]
+  answer_sketch: "Up to 40%."
+  evidence:
+    - {doc_id: PMC12756502, page: 2, quote: "reaches up to 40% if it is based exclusively on clinical consensus"}
+  type: numeric
+  difficulty: medium
+  source: claude-drafted
+  review: accepted
+
+- id: q22
+  question: "What kind of machine was used to image the patients' resting brain activity?"
+  category: answerable
+  expected_behavior: answer
+  expected_docs: [PMC12756502]
+  expected_pages: [2]
+  answer_sketch: "A whole-body 3 T Signa GE MRI scanner with a standard head coil."
+  evidence:
+    - {doc_id: PMC12756502, page: 2, quote: "whole-body 3 T Signa GE scanner"}
+  type: paraphrase
+  difficulty: medium
+  source: claude-drafted
+  review: accepted
+
+- id: q23
+  question: "How long after intrathecal injection did the tracer first appear in the cerebral cortex of reference subjects?"
+  category: answerable
+  expected_behavior: answer
+  expected_docs: [PMC12757395]
+  expected_pages: [1]
+  answer_sketch: "About 1 hour in the frontal, temporal, parietal and occipital cortex; 2-4 hours in the corresponding white matter."
+  evidence:
+    - {doc_id: PMC12757395, page: 1, quote: "approximately 1 h in the frontal, temporal, parietal, and occipital cerebral cortex"}
+  type: numeric
+  difficulty: easy
+  source: claude-drafted
+  review: accepted
+
+- id: q24
+  question: "Which statistical technique was used to estimate when the tracer first appeared in brain tissue?"
+  category: answerable
+  expected_behavior: answer
+  expected_docs: [PMC12757395]
+  expected_pages: [1]
+  answer_sketch: "Segmented regression, with the breakpoint in the normalized T1 signal taken as the first tracer appearance."
+  evidence:
+    - {doc_id: PMC12757395, page: 1, quote: "This study implemented segmented regression analysis"}
+  type: factoid
+  difficulty: medium
+  source: claude-drafted
+  review: accepted
+
+- id: q25
+  question: "In which brain regions did patients with idiopathic intracranial hypertension show clearly delayed tracer arrival?"
+  category: answerable
+  expected_behavior: answer
+  expected_docs: [PMC12757395]
+  expected_pages: [4]
+  answer_sketch: "Parietal and insular white matter, delayed by 2-3 hours versus reference subjects; most other regions differed by about 0.5 h, non-significantly."
+  evidence:
+    - {doc_id: PMC12757395, page: 4, quote: "a significant delay in IIH patients in parietal white matter and insular white matter"}
+  type: paraphrase
+  difficulty: hard
+  source: claude-drafted
+  review: accepted
+
+- id: q26
+  question: "Which gene do recent studies identify as encoding the sigma-2 receptor?"
+  category: answerable
+  expected_behavior: answer
+  expected_docs: [PMC12757877]
+  expected_pages: [3]
+  answer_sketch: "TMEM97 (Transmembrane 97)."
+  evidence:
+    - {doc_id: PMC12757877, page: 3, quote: "σ2R gene is a product of Transmembrane 97 (TMEM97) gene"}
+  type: factoid
+  difficulty: medium
+  source: claude-drafted
+  review: accepted
+
+- id: q27
+  question: "Which sigma-1 receptor ligand has reached phase 2b/3 trials for Alzheimer's disease?"
+  category: answerable
+  expected_behavior: answer
+  expected_docs: [PMC12757877]
+  expected_pages: [2]
+  answer_sketch: "ANAVEX2-73 (blarcamesine), a mixed sigma-1 and muscarinic receptor ligand."
+  evidence:
+    - {doc_id: PMC12757877, page: 2, quote: "ANAVEX2-73 (blarcamesine), a mixed sigma-1 and muscarinic receptor ligand"}
+  type: factoid
+  difficulty: medium
+  source: claude-drafted
+  review: accepted
+
+- id: q28
+  question: "At what sampling rate were the HD-sEMG signals recorded?"
+  category: answerable
+  expected_behavior: answer
+  expected_docs: [PMC12794296]
+  expected_pages: [3]
+  answer_sketch: "2,048 Hz, band-pass filtered 10-500 Hz with 16-bit resolution."
+  evidence:
+    - {doc_id: PMC12794296, page: 3, quote: "measured at 2,048 Hz"}
+  type: numeric
+  difficulty: easy
+  source: claude-drafted
+  review: accepted
+
+- id: q29
+  question: "What inter-subject accuracy did distal-wrist signals reach for single-DoF gestures?"
+  category: answerable
+  expected_behavior: answer
+  expected_docs: [PMC12794296]
+  expected_pages: [1]
+  answer_sketch: "75.47% (versus 98.63% intra-subject and 79.73% inter-day)."
+  evidence:
+    - {doc_id: PMC12794296, page: 1, quote: "75.47% for inter-subject validation protocols"}
+  type: numeric
+  difficulty: medium
+  source: claude-drafted
+  review: accepted
+
+- id: q30
+  question: "How long was the sliding window used to segment each gesture movement, and what was the step size?"
+  category: answerable
+  expected_behavior: answer
+  expected_docs: [PMC12794296]
+  expected_pages: [3]
+  answer_sketch: "A 500 ms window with a 125 ms step (75% overlap), after discarding the first 0.25 s of each 1 s movement."
+  evidence:
+    - {doc_id: PMC12794296, page: 3, quote: "500 ms sliding window with a 125 ms step size"}
+  type: numeric
+  difficulty: medium
+  source: claude-drafted
+  review: accepted
+
+# Not answerable. not_covered: in-domain, but the corpus does not contain the answer.
+# false_premise: the corpus states the opposite; a correct reply refuses or corrects the premise.
+
+- id: u01
+  question: "What inter-rater agreement, such as Cohen's kappa, was reported for the manual skull-stripping ground truth?"
+  category: not_covered
+  expected_behavior: abstain
+  expected_docs: []
+  expected_pages: []
+  answer_sketch: "Not reported: one student labeled the scans and a neuroradiologist quality-checked them."
+  evidence: []
+  type: unanswerable
+  difficulty: hard
+  source: claude-drafted
+  review: accepted
+
+- id: u02
+  question: "How many patients in the anterior choroidal artery cohort underwent mechanical thrombectomy?"
+  category: not_covered
+  expected_behavior: abstain
+  expected_docs: []
+  expected_pages: []
+  answer_sketch: "Not reported: the paper reports intravenous thrombolysis and antiplatelet therapy only; thrombectomy appears only in cited studies."
+  evidence: []
+  type: unanswerable
+  difficulty: hard
+  source: claude-drafted
+  review: accepted
+
+- id: u03
+  question: "What was the average hand-grip strength of the participants in the HD-sEMG gesture study?"
+  category: not_covered
+  expected_behavior: abstain
+  expected_docs: []
+  expected_pages: []
+  answer_sketch: "Not reported. Distractor: the brainstem hemorrhage case report mentions a single patient's grip strength grade."
+  evidence: []
+  type: unanswerable
+  difficulty: hard
+  source: claude-drafted
+  review: accepted
+
+- id: u04
+  question: "Which antiepileptic drug was given to the patient with the brainstem hemorrhage?"
+  category: not_covered
+  expected_behavior: abstain
+  expected_docs: []
+  expected_pages: []
+  answer_sketch: "Not reported: no antiepileptic treatment is mentioned."
+  evidence: []
+  type: unanswerable
+  difficulty: medium
+  source: claude-drafted
+  review: accepted
+
+- id: u05
+  question: "Why did Desulfovibrio lower alpha-synuclein levels in the mouse duodenum?"
+  category: false_premise
+  expected_behavior: correct_premise
+  expected_docs: [PMC12756163]
+  expected_pages: [6]
+  answer_sketch: "False premise: DSV increased duodenal alpha-synuclein (638.6 vs 369.7 pg/5 mg)."
+  evidence:
+    - {doc_id: PMC12756163, page: 6, quote: "DSV-gavaged mice had significantly higher level of α-syn"}
+  type: unanswerable
+  difficulty: medium
+  source: claude-drafted
+  review: accepted
+
+- id: u06
+  question: "Why did the control group outperform the auditory-vocal training group in the zither study?"
+  category: false_premise
+  expected_behavior: correct_premise
+  expected_docs: [PMC12756423]
+  expected_pages: [8]
+  answer_sketch: "False premise: only the experimental group improved significantly (Z = -4.910, p < 0.001); the control group did not."
+  evidence:
+    - {doc_id: PMC12756423, page: 8, quote: "the difference in scores before and after the test in the control group was not significant"}
+  type: unanswerable
+  difficulty: medium
+  source: claude-drafted
+  review: accepted
+
+- id: u07
+  question: "Why did the authors recommend BET as the best skull-stripping tool for pediatric scans?"
+  category: false_premise
+  expected_behavior: correct_premise
+  expected_docs: [PMC12756446]
+  expected_pages: [1]
+  answer_sketch: "False premise: the authors recommend SynthStrip; BET had the lowest median Dice score."
+  evidence:
+    - {doc_id: PMC12756446, page: 1, quote: "we recommend SynthStrip for skull stripping of pediatric T2-weighted MRI scans"}
+  type: unanswerable
+  difficulty: medium
+  source: claude-drafted
+  review: accepted
+
+- id: u08
+  question: "What is the capital of Australia?"
+  category: off_topic
+  expected_behavior: abstain
+  expected_docs: []
+  expected_pages: []
+  answer_sketch: "Outside the corpus."
+  evidence: []
+  type: unanswerable
+  difficulty: easy
+  source: claude-drafted
+  review: accepted
+
+- id: u09
+  question: "How long should sourdough bread proof before baking?"
+  category: off_topic
+  expected_behavior: abstain
+  expected_docs: []
+  expected_pages: []
+  answer_sketch: "Outside the corpus."
+  evidence: []
+  type: unanswerable
+  difficulty: easy
+  source: claude-drafted
+  review: accepted
+
+- id: u10
+  question: "What is the average time complexity of quicksort?"
+  category: off_topic
+  expected_behavior: abstain
+  expected_docs: []
+  expected_pages: []
+  answer_sketch: "Outside the corpus."
+  evidence: []
+  type: unanswerable
+  difficulty: easy
+  source: claude-drafted
+  review: accepted

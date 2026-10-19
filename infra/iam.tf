@@ -39,9 +39,24 @@ data "aws_iam_policy_document" "ingest_permissions" {
   }
 
   statement {
+    effect  = "Allow"
+    actions = ["s3:PutObject", "s3:DeleteObject"]
+    resources = [
+      "${aws_s3_bucket.processed.arn}/chunks/*",
+      "${aws_s3_bucket.processed.arn}/manifests/*",
+    ]
+  }
+
+  statement {
     effect    = "Allow"
-    actions   = ["s3:PutObject"]
-    resources = ["${aws_s3_bucket.processed.arn}/*"]
+    actions   = ["s3:ListBucket"]
+    resources = [aws_s3_bucket.processed.arn]
+
+    condition {
+      test     = "StringLike"
+      variable = "s3:prefix"
+      values   = ["chunks/*"]
+    }
   }
 }
 
@@ -128,6 +143,19 @@ data "aws_iam_policy_document" "kb_permissions" {
       "s3vectors:GetIndex",
     ]
     resources = [aws_s3vectors_index.chunks.index_arn]
+  }
+  statement {
+    sid       = "Rerank"
+    effect    = "Allow"
+    actions   = ["bedrock:Rerank"]
+    resources = ["*"]
+  }
+
+  statement {
+    sid       = "InvokeReranker"
+    effect    = "Allow"
+    actions   = ["bedrock:InvokeModel"]
+    resources = [data.aws_bedrock_foundation_model.amazon_rerank.model_arn]
   }
 }
 

@@ -18,8 +18,9 @@ dev = [
     "pytest-mock>=3.14",
     "moto[s3]>=5.0",
     "ruff>=0.6",
-    "boto3-stubs[bedrock-agent-runtime,bedrock-runtime,s3]>=1.35.0",
+    "boto3-stubs[bedrock-agent,bedrock-agent-runtime,bedrock-runtime,s3]>=1.35.0",
     "types-pyyaml>=6.0",
+    "boto3[crt]>=1.43.93",
 ]
 
 # Parser bake-off: candidates plus the sentence splitter used by the metrics.
@@ -31,14 +32,16 @@ bakeoff = [
 ]
 ingest = [
     "pypdf[fonts]>=6.18.1",
+    "pysbd>=0.3.4",
 ]
+query = []
 
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/bakeoff", "src/ingest"]
+packages = ["src/bakeoff", "src/ingest", "src/query"]
 
 [tool.ruff]
 line-length = 100
@@ -65,3 +68,6 @@ ignore_missing_imports = true
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 addopts = "--cov=src --cov-report=term-missing --cov-report=xml --cov-fail-under=85 -q"
+
+[tool.coverage.report]
+skip_empty = true

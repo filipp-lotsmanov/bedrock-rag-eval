@@ -5,6 +5,10 @@ data "aws_bedrock_foundation_model" "titan_v2" {
   model_id = "amazon.titan-embed-text-v2:0"
 }
 
+data "aws_bedrock_foundation_model" "amazon_rerank" {
+  model_id = "amazon.rerank-v1:0"
+}
+
 resource "aws_s3vectors_vector_bucket" "vectors" {
   vector_bucket_name = "${var.project}-vectors"
 }
