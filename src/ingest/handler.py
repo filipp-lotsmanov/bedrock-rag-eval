@@ -58,35 +58,23 @@ def delete_prefix(s3: "S3Client", bucket: str, prefix: str) -> int:
     """Delete every object under prefix; return how many were deleted."""
     keys = [
         item["Key"]
-        for page in s3.get_paginator("list_objects_v2").paginate(
-            Bucket=bucket, Prefix=prefix
-        )
+        for page in s3.get_paginator("list_objects_v2").paginate(Bucket=bucket, Prefix=prefix)
         for item in page.get("Contents", [])
     ]
     for i in range(0, len(keys), DELETE_BATCH):
-        batch: list[ObjectIdentifierTypeDef] = [
-            {"Key": key} for key in keys[i : i + DELETE_BATCH]
-        ]
-        response = s3.delete_objects(
-            Bucket=bucket, Delete={"Objects": batch, "Quiet": True}
-        )
+        batch: list[ObjectIdentifierTypeDef] = [{"Key": key} for key in keys[i : i + DELETE_BATCH]]
+        response = s3.delete_objects(Bucket=bucket, Delete={"Objects": batch, "Quiet": True})
         if response.get("Errors"):
-            raise RuntimeError(
-                f"failed to delete under {prefix!r}: {response['Errors']}"
-            )
+            raise RuntimeError(f"failed to delete under {prefix!r}: {response['Errors']}")
     return len(keys)
 
 
 def put_all(s3: "S3Client", bucket: str, objects: Iterable[S3Object]) -> None:
     for obj in objects:
-        s3.put_object(
-            Bucket=bucket, Key=obj.key, Body=obj.body, ContentType=obj.content_type
-        )
+        s3.put_object(Bucket=bucket, Key=obj.key, Body=obj.body, ContentType=obj.content_type)
 
 
-def ingest_pdf(
-    s3: "S3Client", bucket: str, key: str, processed_bucket: str
-) -> IngestSummary:
+def ingest_pdf(s3: "S3Client", bucket: str, key: str, processed_bucket: str) -> IngestSummary:
     doc_id = doc_id_from_key(key)
     response = s3.get_object(Bucket=bucket, Key=key)
     doi = response["Metadata"].get("doi")
@@ -110,7 +98,7 @@ def ingest_pdf(
     return summary
 
 
-def main(event: Mapping[str, Any], context: object) -> dict[str, list[IngestSummary]]:
+def main(event: Mapping[str, Any], _context: object) -> dict[str, list[IngestSummary]]:
     processed_bucket = os.environ["PROCESSED_BUCKET"]
     results = [
         ingest_pdf(
