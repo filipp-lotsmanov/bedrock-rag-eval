@@ -7,16 +7,20 @@
 # expected_behavior: answer | abstain | correct_premise
 # type:              factoid | numeric | paraphrase | multi_passage | unanswerable
 # review:            pending | accepted | edited | dropped
+#
+# Labels v2: completeness pass. expected_pages lists every page that states the answer,
+# found by searching the cleaned corpus independently of any run's results.
 
 - id: q01
   question: "Which gut microbe was used to infect the cultured intestinal and neuronal cells?"
   category: answerable
   expected_behavior: answer
   expected_docs: [PMC12756163]
-  expected_pages: [2]
+  expected_pages: [1, 2]
   answer_sketch: "Desulfovibrio vulgaris (DSV), strain Hildenborough (ATCC 29579)."
   evidence:
     - {doc_id: PMC12756163, page: 2, quote: "Desulfovibrio vulgaris Hildenborough (ATCC 29579, Manassas, VA)"}
+    - {doc_id: PMC12756163, page: 1, quote: "cells were infected with Desulfovibrio vulgaris (DSV)"}
   type: paraphrase
   difficulty: easy
   source: claude-drafted
@@ -41,10 +45,11 @@
   category: answerable
   expected_behavior: answer
   expected_docs: [PMC12756163]
-  expected_pages: [6]
+  expected_pages: [6, 8]
   answer_sketch: "The ileum and the colon; only the duodenum showed a significant increase."
   evidence:
     - {doc_id: PMC12756163, page: 6, quote: "we did not find increase in α-syn levels in the ileum or the colon"}
+    - {doc_id: PMC12756163, page: 8, quote: "not in ileum or in colon"}
   type: paraphrase
   difficulty: hard
   source: claude-drafted
@@ -55,10 +60,11 @@
   category: answerable
   expected_behavior: answer
   expected_docs: [PMC12756423]
-  expected_pages: [6]
+  expected_pages: [6, 9]
   answer_sketch: "32 in the experimental group and 31 in the control group (63 in total), after attrition from 66."
   evidence:
     - {doc_id: PMC12756423, page: 6, quote: "the final control group comprised 31 participants"}
+    - {doc_id: PMC12756423, page: 9, quote: "Total options Control 31 31 31 31 31 31 Experimental 32"}
   type: numeric
   difficulty: easy
   source: claude-drafted
@@ -69,10 +75,12 @@
   category: answerable
   expected_behavior: answer
   expected_docs: [PMC12756423]
-  expected_pages: [7]
+  expected_pages: [1, 7, 9]
   answer_sketch: "FA+ (slightly raised Fa) and TI- (slightly lowered Ti), the two pitches that require pressing on the zither."
   evidence:
     - {doc_id: PMC12756423, page: 7, quote: "Items 1–2 test the intonation of pitch FA+"}
+    - {doc_id: PMC12756423, page: 1, quote: "Pitch accuracy on two critical tones (FA+ and TI–)"}
+    - {doc_id: PMC12756423, page: 9, quote: "Item 1–2 Intonation FA+"}
   type: factoid
   difficulty: medium
   source: claude-drafted
@@ -83,10 +91,11 @@
   category: answerable
   expected_behavior: answer
   expected_docs: [PMC12756423]
-  expected_pages: [8]
+  expected_pages: [8, 10]
   answer_sketch: "Zero before training and 21 after training; item 2 (pitch FA+) was the most challenging."
   evidence:
     - {doc_id: PMC12756423, page: 8, quote: "increased from zero before training to 21 after training"}
+    - {doc_id: PMC12756423, page: 10, quote: "2 Pre-test 0 0 0 0.001 0.808 Post-test 3.28 2.41 21"}
   type: numeric
   difficulty: medium
   source: claude-drafted
@@ -97,11 +106,12 @@
   category: answerable
   expected_behavior: answer
   expected_docs: [PMC12756423]
-  expected_pages: [9]
+  expected_pages: [9, 10]
   answer_sketch: "No. Gender (p = 0.312), age group (p = 0.104) and years of study (p = 0.388) were all non-significant."
   evidence:
     - {doc_id: PMC12756423, page: 9, quote: "gender did not have a statistically significant impact on intonation improvement"}
     - {doc_id: PMC12756423, page: 9, quote: "did not have a statistically significant effect on intonation improvement either"}
+    - {doc_id: PMC12756423, page: 10, quote: "training effectiveness showed no significant variation across gender, age, or duration of study"}
   type: multi_passage
   difficulty: hard
   source: claude-drafted
@@ -112,10 +122,12 @@
   category: answerable
   expected_behavior: answer
   expected_docs: [PMC12756446]
-  expected_pages: [1]
+  expected_pages: [1, 8, 12]
   answer_sketch: "SynthStrip, for its robustness and quick computation time."
   evidence:
     - {doc_id: PMC12756446, page: 1, quote: "we recommend SynthStrip for skull stripping of pediatric T2-weighted MRI scans"}
+    - {doc_id: PMC12756446, page: 8, quote: "we recommend SynthStrip since it is the most robust model"}
+    - {doc_id: PMC12756446, page: 12, quote: "we recommend SynthStrip and its application prior to any resampling"}
   type: factoid
   difficulty: easy
   source: claude-drafted
@@ -126,10 +138,12 @@
   category: answerable
   expected_behavior: answer
   expected_docs: [PMC12756446]
-  expected_pages: [6]
+  expected_pages: [1, 6, 7]
   answer_sketch: "HD-BET took about 132 s per scan; SynthStrip took about 7 s."
   evidence:
     - {doc_id: PMC12756446, page: 6, quote: "HD-BET (M = 132 s, SD = 0.83)"}
+    - {doc_id: PMC12756446, page: 1, quote: "Mean computing times ranged from 2 s (BET) to 132 s (HD-BET) with SynthStrip requiring 7 s"}
+    - {doc_id: PMC12756446, page: 7, quote: "HD-BET (preprocessed) 131.81"}
   type: numeric
   difficulty: medium
   source: claude-drafted
@@ -140,10 +154,11 @@
   category: answerable
   expected_behavior: answer
   expected_docs: [PMC12756446]
-  expected_pages: [8]
+  expected_pages: [8, 11]
   answer_sketch: "BET: its Dice score fell with age (Pearson r = -0.734), from 0.950 under one year to 0.857 in the fifth year."
   evidence:
     - {doc_id: PMC12756446, page: 8, quote: "BET showed a strong correlation with the covariate age"}
+    - {doc_id: PMC12756446, page: 11, quote: "steady performance decrease in correlation with the infants’ age"}
   type: paraphrase
   difficulty: hard
   source: claude-drafted
@@ -154,10 +169,12 @@
   category: answerable
   expected_behavior: answer
   expected_docs: [PMC12756476]
-  expected_pages: [1]
+  expected_pages: [1, 2, 3]
   answer_sketch: "10.3 mL on CT."
   evidence:
     - {doc_id: PMC12756476, page: 1, quote: "CT imaging revealed a 10.3 mL brainstem hemorrhage"}
+    - {doc_id: PMC12756476, page: 2, quote: "primary brainstem hemorrhage measuring 10.3 mL"}
+    - {doc_id: PMC12756476, page: 3, quote: "high-density shadow in the brainstem (volume 10.3 ml"}
   type: numeric
   difficulty: easy
   source: claude-drafted
@@ -182,10 +199,11 @@
   category: answerable
   expected_behavior: answer
   expected_docs: [PMC12756476]
-  expected_pages: [2]
+  expected_pages: [1, 2]
   answer_sketch: "Motor aphasia, severe dysphagia with nasogastric feeding, neurogenic bladder and bowel dysfunction, tracheostomy dependence; modified Rankin Scale 5."
   evidence:
     - {doc_id: PMC12756476, page: 2, quote: "including motor aphasia, severe dysphagia"}
+    - {doc_id: PMC12756476, page: 1, quote: "though exhibiting motor aphasia, dysphagia, and urinary/fecal incontinence"}
   type: paraphrase
   difficulty: medium
   source: claude-drafted
@@ -196,10 +214,12 @@
   category: answerable
   expected_behavior: answer
   expected_docs: [PMC12756487]
-  expected_pages: [2]
+  expected_pages: [2, 4, 6]
   answer_sketch: "At the T1-2 level, where an osteophyte potentially pierced the dura."
   evidence:
     - {doc_id: PMC12756487, page: 2, quote: "the potential location of the CSF leak may at the T1-2 osteophyte level"}
+    - {doc_id: PMC12756487, page: 4, quote: "The location of the CSF leak was suspected to be at the T1/2 osteophyte level"}
+    - {doc_id: PMC12756487, page: 6, quote: "significant bone spurs were observed at the T1-2 vertebral level"}
   type: factoid
   difficulty: medium
   source: claude-drafted
@@ -224,11 +244,12 @@
   category: answerable
   expected_behavior: answer
   expected_docs: [PMC12756487]
-  expected_pages: [3]
+  expected_pages: [3, 4]
   answer_sketch: "The retroclival subdural space is a real, confined compartment between the clival dura and a dense arachnoid layer; it is poorly vascularized, and small bleeds drain into the spinal subdural space."
   evidence:
     - {doc_id: PMC12756487, page: 3, quote: "confined compartment"}
     - {doc_id: PMC12756487, page: 3, quote: "The limited vascularization of this space further restricts hemorrhage"}
+    - {doc_id: PMC12756487, page: 4, quote: "This anatomical compartment is a real, confined compartment"}
   type: multi_passage
   difficulty: hard
   source: claude-drafted
@@ -239,10 +260,11 @@
   category: answerable
   expected_behavior: answer
   expected_docs: [PMC12756492]
-  expected_pages: [1]
+  expected_pages: [1, 5]
   answer_sketch: "78 of 206 patients (37.86%)."
   evidence:
     - {doc_id: PMC12756492, page: 1, quote: "Among 206 enrolled patients, 78 (37.86%) developed END"}
+    - {doc_id: PMC12756492, page: 5, quote: "Among these, 78 patients (37.86%) developed END"}
   type: numeric
   difficulty: easy
   source: claude-drafted
@@ -253,11 +275,14 @@
   category: answerable
   expected_behavior: answer
   expected_docs: [PMC12756492]
-  expected_pages: [1]
+  expected_pages: [1, 4, 7, 10]
   answer_sketch: "SynthSR for reconstruction into standardized high-resolution images, then AssemblyNet for automated tissue segmentation."
   evidence:
     - {doc_id: PMC12756492, page: 1, quote: "using the SynthSR deep learning algorithm"}
     - {doc_id: PMC12756492, page: 1, quote: "segmentation via AssemblyNet"}
+    - {doc_id: PMC12756492, page: 4, quote: "fully automated brain tissue segmentation using the AssemblyNet deep learning tool"}
+    - {doc_id: PMC12756492, page: 7, quote: "automated segmentation using AssemblyNet following SynthSR image reconstruction"}
+    - {doc_id: PMC12756492, page: 10, quote: "convolutional neural network tools (SynthSR and AssemblyNet)"}
   type: factoid
   difficulty: medium
   source: claude-drafted
@@ -282,10 +307,11 @@
   category: answerable
   expected_behavior: answer
   expected_docs: [PMC12756502]
-  expected_pages: [1]
+  expected_pages: [1, 8]
   answer_sketch: "31 of 58 UWS patients and 23 of 30 MCS patients, classified with 90.2% average accuracy."
   evidence:
     - {doc_id: PMC12756502, page: 1, quote: "Thirty-one out of 58 UWS patients and 23 out of 30 MCS patients"}
+    - {doc_id: PMC12756502, page: 8, quote: "31 out of 58 UWS patients (Figure 1F; red circles) and 23 out of 30 MCS patients"}
   type: numeric
   difficulty: easy
   source: claude-drafted
@@ -324,10 +350,11 @@
   category: answerable
   expected_behavior: answer
   expected_docs: [PMC12757395]
-  expected_pages: [1]
+  expected_pages: [1, 4]
   answer_sketch: "About 1 hour in the frontal, temporal, parietal and occipital cortex; 2-4 hours in the corresponding white matter."
   evidence:
     - {doc_id: PMC12757395, page: 1, quote: "approximately 1 h in the frontal, temporal, parietal, and occipital cerebral cortex"}
+    - {doc_id: PMC12757395, page: 4, quote: "occipital cerebral cortex was approximately 1 h"}
   type: numeric
   difficulty: easy
   source: claude-drafted
@@ -338,10 +365,14 @@
   category: answerable
   expected_behavior: answer
   expected_docs: [PMC12757395]
-  expected_pages: [1]
+  expected_pages: [1, 2, 3, 4, 6]
   answer_sketch: "Segmented regression, with the breakpoint in the normalized T1 signal taken as the first tracer appearance."
   evidence:
     - {doc_id: PMC12757395, page: 1, quote: "This study implemented segmented regression analysis"}
+    - {doc_id: PMC12757395, page: 2, quote: "we utilize a statistical model known as segmented regression"}
+    - {doc_id: PMC12757395, page: 3, quote: "Segmented regression models are a type of regression analysis"}
+    - {doc_id: PMC12757395, page: 4, quote: "derived from linear segmented regression models"}
+    - {doc_id: PMC12757395, page: 6, quote: "Segmented regression analysis seemed feasible to estimate the time to first appearance of the tracer"}
   type: factoid
   difficulty: medium
   source: claude-drafted
@@ -352,10 +383,12 @@
   category: answerable
   expected_behavior: answer
   expected_docs: [PMC12757395]
-  expected_pages: [4]
+  expected_pages: [1, 4, 8]
   answer_sketch: "Parietal and insular white matter, delayed by 2-3 hours versus reference subjects; most other regions differed by about 0.5 h, non-significantly."
   evidence:
     - {doc_id: PMC12757395, page: 4, quote: "a significant delay in IIH patients in parietal white matter and insular white matter"}
+    - {doc_id: PMC12757395, page: 1, quote: "somewhat longer estimated delays in the parietal and insular white matter regions"}
+    - {doc_id: PMC12757395, page: 8, quote: "later for parietal and insular white matter and limbic structures"}
   type: paraphrase
   difficulty: hard
   source: claude-drafted
@@ -380,10 +413,11 @@
   category: answerable
   expected_behavior: answer
   expected_docs: [PMC12757877]
-  expected_pages: [2]
+  expected_pages: [2, 6]
   answer_sketch: "ANAVEX2-73 (blarcamesine), a mixed sigma-1 and muscarinic receptor ligand."
   evidence:
     - {doc_id: PMC12757877, page: 2, quote: "ANAVEX2-73 (blarcamesine), a mixed sigma-1 and muscarinic receptor ligand"}
+    - {doc_id: PMC12757877, page: 6, quote: "Blarcamesine Phase 3* ANAVEX"}
   type: factoid
   difficulty: medium
   source: claude-drafted
@@ -408,10 +442,11 @@
   category: answerable
   expected_behavior: answer
   expected_docs: [PMC12794296]
-  expected_pages: [1]
+  expected_pages: [1, 5]
   answer_sketch: "75.47% (versus 98.63% intra-subject and 79.73% inter-day)."
   evidence:
     - {doc_id: PMC12794296, page: 1, quote: "75.47% for inter-subject validation protocols"}
+    - {doc_id: PMC12794296, page: 5, quote: "Distal wrist 98.63% 79.73% 75.47%"}
   type: numeric
   difficulty: medium
   source: claude-drafted

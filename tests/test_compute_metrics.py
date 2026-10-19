@@ -152,7 +152,10 @@ def test_compute_writes_metrics_and_guards_labels(tmp_path: Path) -> None:
     good = make_run(tmp_path, hashlib.sha256(questions.read_bytes()).hexdigest())
     metrics = cm.compute(good, questions, allow_label_change=False, grade=False)
     assert metrics["summary"]["page_hit@k"]["value"] == 1.0
+    assert metrics["labels_match_run"] is True
     assert (good / "metrics.json").exists()
     questions.write_text(questions.read_text(encoding="utf-8") + "# edited\n", encoding="utf-8")
     with pytest.raises(SystemExit, match="changed since run"):
         cm.compute(good, questions, allow_label_change=False, grade=False)
+    relabeled = cm.compute(good, questions, allow_label_change=True, grade=False)
+    assert relabeled["labels_match_run"] is False

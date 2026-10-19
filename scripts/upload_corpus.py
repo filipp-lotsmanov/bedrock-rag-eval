@@ -101,9 +101,7 @@ def upload_corpus(
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("--bucket", required=True, help="the raw bucket")
-    parser.add_argument(
-        "--dry-run", action="store_true", help="show what would be uploaded"
-    )
+    parser.add_argument("--dry-run", action="store_true", help="show what would be uploaded")
     parser.add_argument(
         "--force", action="store_true", help="upload unchanged PDFs too, to re-ingest"
     )

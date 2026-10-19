@@ -5,6 +5,8 @@
     "commit": "0a222fb65e6c395f26bcc1c3d91894893154e173",
     "dirty": true
   },
+  "questions_sha256": "6e043ec14b6518424b51c306b116d2e087c41183615b5f5054ecda932e28e1ea",
+  "labels_match_run": false,
   "questions_scored": 40,
   "questions_missing": [],
   "summary": {
@@ -15,12 +17,12 @@
       "denominator": 30
     },
     "page_hit@k": {
-      "value": 0.933,
-      "numerator": 28,
+      "value": 1.0,
+      "numerator": 30,
       "denominator": 30
     },
     "mrr": {
-      "value": 0.786,
+      "value": 0.961,
       "denominator": 30
     },
     "answer_rate": {
@@ -45,8 +47,8 @@
       "denominator": 33
     },
     "citation_on_evidence": {
-      "value": 0.867,
-      "numerator": 26,
+      "value": 1.0,
+      "numerator": 30,
       "denominator": 30
     }
   },
@@ -65,9 +67,9 @@
       "abstained": false,
       "doc_hit": true,
       "page_hit": true,
-      "reciprocal_rank": 0.2,
+      "reciprocal_rank": 0.3333333333333333,
       "top_score": 0.19132767617702484,
-      "citation_on_evidence": false,
+      "citation_on_evidence": true,
       "citation_valid": true
     },
     {
@@ -87,7 +89,7 @@
       "abstained": false,
       "doc_hit": true,
       "page_hit": true,
-      "reciprocal_rank": 0.5,
+      "reciprocal_rank": 1.0,
       "top_score": 0.3263787627220154,
       "citation_on_evidence": true,
       "citation_valid": true
@@ -153,7 +155,7 @@
       "abstained": false,
       "doc_hit": true,
       "page_hit": true,
-      "reciprocal_rank": 0.5,
+      "reciprocal_rank": 1.0,
       "top_score": 0.977022647857666,
       "citation_on_evidence": true,
       "citation_valid": true
@@ -164,7 +166,7 @@
       "abstained": false,
       "doc_hit": true,
       "page_hit": true,
-      "reciprocal_rank": 0.3333333333333333,
+      "reciprocal_rank": 1.0,
       "top_score": 0.002296159043908119,
       "citation_on_evidence": true,
       "citation_valid": true
@@ -208,7 +210,7 @@
       "abstained": false,
       "doc_hit": true,
       "page_hit": true,
-      "reciprocal_rank": 0.3333333333333333,
+      "reciprocal_rank": 1.0,
       "top_score": 0.8660192489624023,
       "citation_on_evidence": true,
       "citation_valid": true
@@ -251,10 +253,10 @@
       "category": "answerable",
       "abstained": false,
       "doc_hit": true,
-      "page_hit": false,
-      "reciprocal_rank": 0.0,
+      "page_hit": true,
+      "reciprocal_rank": 1.0,
       "top_score": 0.9432430863380432,
-      "citation_on_evidence": false,
+      "citation_on_evidence": true,
       "citation_valid": true
     },
     {
@@ -273,10 +275,10 @@
       "category": "answerable",
       "abstained": false,
       "doc_hit": true,
-      "page_hit": false,
-      "reciprocal_rank": 0.0,
+      "page_hit": true,
+      "reciprocal_rank": 1.0,
       "top_score": 0.996936559677124,
-      "citation_on_evidence": false,
+      "citation_on_evidence": true,
       "citation_valid": true
     },
     {
@@ -329,9 +331,9 @@
       "abstained": false,
       "doc_hit": true,
       "page_hit": true,
-      "reciprocal_rank": 0.2,
+      "reciprocal_rank": 1.0,
       "top_score": 0.8272706866264343,
-      "citation_on_evidence": false,
+      "citation_on_evidence": true,
       "citation_valid": true
     },
     {

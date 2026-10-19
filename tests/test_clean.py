@@ -45,10 +45,7 @@ def test_ligatures_expand() -> None:
         expand_ligatures("speci\ufb01c di\ufb00erent In\ufb02uence")
         == "specific different Influence"
     )
-    assert (
-        expand_ligatures("e\ue013ect di\ue013usion-weighted")
-        == "effect diffusion-weighted"
-    )
+    assert expand_ligatures("e\ue013ect di\ue013usion-weighted") == "effect diffusion-weighted"
 
 
 def test_boilerplate_removes_repeating_edge_lines_only() -> None:

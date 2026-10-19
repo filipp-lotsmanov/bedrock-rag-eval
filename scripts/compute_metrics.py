@@ -182,10 +182,13 @@ def compute(
     ]
     latencies = [results[r["id"]]["latency_s"] for r in rows]
     usage = [results[r["id"]]["result"]["usage"] for r in rows]
+    labels_sha = hashlib.sha256(questions_path.read_bytes()).hexdigest()
     metrics = {
         "run_id": run["run_id"],
         "config_id": run["config_id"],
         "git": run["git"],
+        "questions_sha256": labels_sha,
+        "labels_match_run": labels_sha == run["questions_sha256"],
         "questions_scored": len(rows),
         "questions_missing": sorted(set(questions) - set(results)),
         "summary": summarize(rows, run["config"]["top_k"]),
