@@ -1,8 +1,12 @@
 # Cognito issues the JWTs that the API's authorizer checks. Only the account owner creates users.
 
 locals {
-  # Dev server first; the CloudFront URL is added when the frontend exists.
-  frontend_origins = ["http://localhost:5173"]
+  # Local dev server and the CloudFront site; feeds the callback URLs here and CORS in api.tf.
+  frontend_origins = [
+    "http://localhost:5173",
+    "https://${aws_cloudfront_distribution.frontend.domain_name}",
+  ]
+  login_domain = "https://${aws_cognito_user_pool_domain.main.domain}.auth.${data.aws_region.current.region}.amazoncognito.com"
 }
 
 resource "aws_cognito_user_pool" "main" {
@@ -11,7 +15,7 @@ resource "aws_cognito_user_pool" "main" {
   user_pool_tier      = "ESSENTIALS"
   username_attributes = ["email"]
   mfa_configuration   = "OFF"
-  deletion_protection = "INACTIVE"
+  deletion_protection = "ACTIVE"
 
   admin_create_user_config {
     allow_admin_create_user_only = true
@@ -102,5 +106,5 @@ output "cli_client_id" {
 }
 
 output "login_domain" {
-  value = "https://${aws_cognito_user_pool_domain.main.domain}.auth.${data.aws_region.current.region}.amazoncognito.com"
+  value = local.login_domain
 }

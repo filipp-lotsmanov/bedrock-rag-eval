@@ -73,3 +73,6 @@ data/raw/
 Thumbs.db
 Desktop.ini
 .DS_Store
+
+#Frontend config
+frontend/config.json
