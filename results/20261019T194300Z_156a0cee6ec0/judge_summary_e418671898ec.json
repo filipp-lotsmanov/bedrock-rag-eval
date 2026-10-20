@@ -1,0 +1,17 @@
+{
+  "judge_model": "eu.amazon.nova-pro-v1:0",
+  "judge_prompt_id": "e418671898ec",
+  "answers_judged": 33,
+  "claims": 45,
+  "verdicts": {
+    "supported": 45,
+    "partial": 0,
+    "unsupported": 0
+  },
+  "claim_support_rate": 1.0,
+  "fully_grounded_answers": {
+    "numerator": 33,
+    "denominator": 33
+  },
+  "not_fully_supported": []
+}

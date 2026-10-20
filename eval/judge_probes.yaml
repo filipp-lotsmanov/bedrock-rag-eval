@@ -1,0 +1,204 @@
+# Seeded-error probes for the groundedness judge, drafted by Claude from run
+# 20261019T194300Z_156a0cee6ec0 (LLM-drafted, human-reviewed via the review field). Seeded probes
+# apply one edit to a reply the judge rated supported; controls are meaning-preserving paraphrases.
+- id: n1
+  source_qid: q09
+  type: number
+  edit:
+    from: 132 seconds
+    to: 112 seconds
+  answer_text: HD-BET took on average 112 seconds per scan, while SynthStrip took 7 seconds per scan [1][2][3][4].
+  expected: not_supported
+  review: pending
+- id: n2
+  source_qid: q28
+  type: number
+  edit:
+    from: 2,048 Hz
+    to: 4,096 Hz
+  answer_text: The HD-sEMG signals were recorded at a sampling rate of 4,096 Hz [1].
+  expected: not_supported
+  review: pending
+- id: n3
+  source_qid: q15
+  type: number
+  edit:
+    from: 13 mL
+    to: 15 mL
+  answer_text: During the first epidural blood patch, a total of 15 mL of autologous venous blood was
+    injected cephalad [1].
+  expected: not_supported
+  review: pending
+- id: e1
+  source_qid: q01
+  type: entity
+  edit:
+    from: Desulfovibrio vulgaris (DSV)
+    to: Escherichia coli (E. coli)
+  answer_text: Escherichia coli (E. coli) was used to infect the cultured intestinal and neuronal cells
+    [4].
+  expected: not_supported
+  review: pending
+- id: e2
+  source_qid: q08
+  type: entity
+  edit:
+    from: recommend SynthStrip
+    to: recommend HD-BET
+  answer_text: The authors recommend HD-BET for skull stripping of pediatric T2-weighted MRI scans [2][3].
+  expected: not_supported
+  review: pending
+- id: e3
+  source_qid: q12
+  type: entity
+  edit:
+    from: polymyxin B and meropenem
+    to: tigecycline and meropenem
+  answer_text: After the Acinetobacter infection recurred in the third postoperative week, the patient
+    was given tigecycline and meropenem [1].
+  expected: not_supported
+  review: pending
+- id: d1
+  source_qid: q02
+  type: direction
+  edit:
+    from: DSV infection reduced
+    to: DSV infection increased
+  answer_text: DSV infection increased tyrosine hydroxylase (TH) expression in SH-SY5Y cells by approximately
+    35–40% [1][2].
+  expected: not_supported
+  review: pending
+- id: d2
+  source_qid: q07
+  type: direction
+  edit:
+    from: did not significantly affect
+    to: significantly affected
+  answer_text: Gender, age, and length of study significantly affected the improvement in learners' intonation
+    [1][2].
+  expected: not_supported
+  review: pending
+- id: d3
+  source_qid: q10
+  type: direction
+  edit:
+    from: got steadily worse
+    to: got steadily better
+  answer_text: BET's segmentation accuracy got steadily better the older the children were [3].
+  expected: not_supported
+  review: pending
+- id: s1
+  source_qid: q25
+  type: scope
+  edit:
+    from: in the parietal and insular white matter regions
+    to: in all cerebral cortex and white matter regions
+  answer_text: Patients with idiopathic intracranial hypertension (IIH) showed somewhat longer estimated
+    delays in all cerebral cortex and white matter regions [1].
+  expected: not_supported
+  review: pending
+- id: s2
+  source_qid: q21
+  type: scope
+  edit:
+    from: when it relies on clinical consensus alone
+    to: even when neuroimaging is combined with clinical assessment
+  answer_text: The misdiagnosis rate for disorders of consciousness can reach up to 40% even when neuroimaging
+    is combined with clinical assessment [1][2].
+  expected: not_supported
+  review: pending
+- id: s3
+  source_qid: q06
+  type: scope
+  edit:
+    from: Before the training, zero participants
+    to: In both the experimental and control groups, before the training, zero participants
+  answer_text: In both the experimental and control groups, before the training, zero participants answered
+    test item 2 correctly, and after the training, 21 participants answered it correctly [1].
+  expected: not_supported
+  review: dropped
+  note: the cited passage never names a group, so 'both groups' is not contradicted by it
+- id: s4
+  source_qid: q17
+  type: scope
+  edit:
+    from: of patients with anterior choroidal artery infarction
+    to: of all patients with acute ischemic stroke
+  answer_text: 43%–60% of all patients with acute ischemic stroke developed early neurological deterioration
+    [2][4].
+  expected: not_supported
+  review: pending
+- id: c1
+  source_qid: q26
+  type: citation
+  edit:
+    from: sigma-2 receptor [1].
+    to: sigma-2 receptor [2].
+  answer_text: Recent studies identify the Transmembrane 97 (TMEM97) gene as encoding the sigma-2 receptor
+    [2].
+  expected: not_supported
+  review: pending
+- id: c2
+  source_qid: q27
+  type: citation
+  edit:
+    from: Alzheimer's disease [1].
+    to: Alzheimer's disease [3].
+  answer_text: ANAVEX2-73 (blarcamesine) has reached phase 2b/3 trials for Alzheimer's disease [3].
+  expected: not_supported
+  review: pending
+- id: c3
+  source_qid: q30
+  type: citation
+  edit:
+    from: 125 ms [1].
+    to: 125 ms [2].
+  answer_text: The sliding window used to segment each gesture movement was 500 ms, and the step size
+    was 125 ms [2].
+  expected: not_supported
+  review: pending
+- id: k1
+  source_qid: q05
+  type: control
+  edit: null
+  answer_text: The intonation test concentrated on two traditional microtones, FA+ and TI– [1].
+  expected: supported
+  review: pending
+- id: k2
+  source_qid: q11
+  type: control
+  edit: null
+  answer_text: In the case report, the brainstem hemorrhage measured 10.3 mL [3][4].
+  expected: supported
+  review: pending
+- id: k3
+  source_qid: q20
+  type: control
+  edit: null
+  answer_text: Of the UWS patients, 31 of 58 were identified as representative by the algorithm, as were
+    23 of the 30 MCS patients [1][2].
+  expected: supported
+  review: pending
+- id: k4
+  source_qid: q22
+  type: control
+  edit: null
+  answer_text: The patients' resting brain activity was imaged on a whole-body 3 T Signa GE scanner [1][2].
+  expected: supported
+  review: pending
+- id: k5
+  source_qid: q24
+  type: control
+  edit: null
+  answer_text: The authors estimated the tracer's first appearance in brain tissue using segmented regression
+    analysis [1][2][3].
+  expected: supported
+  review: pending
+- id: k6
+  source_qid: q29
+  type: control
+  edit: null
+  answer_text: For single-DoF gestures, signals from the distal wrist achieved 75.47% accuracy in inter-subject
+    validation [1][4].
+  expected: supported
+  review: pending

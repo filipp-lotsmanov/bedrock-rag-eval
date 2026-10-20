@@ -1,0 +1,58 @@
+{
+  "judge_model": "eu.amazon.nova-pro-v1:0",
+  "judge_prompt_id": "e418671898ec",
+  "probes_judged": 21,
+  "seeded_caught": {
+    "numerator": 14,
+    "denominator": 15
+  },
+  "controls_passed": {
+    "passed": 6,
+    "total": 6
+  },
+  "by_type": {
+    "number": {
+      "passed": 3,
+      "total": 3
+    },
+    "entity": {
+      "passed": 3,
+      "total": 3
+    },
+    "direction": {
+      "passed": 3,
+      "total": 3
+    },
+    "scope": {
+      "passed": 3,
+      "total": 3
+    },
+    "citation": {
+      "passed": 2,
+      "total": 3
+    },
+    "control": {
+      "passed": 6,
+      "total": 6
+    }
+  },
+  "misses": [
+    {
+      "id": "c3",
+      "type": "citation",
+      "answer_text": "The sliding window used to segment each gesture movement was 500 ms, and the step size was 125 ms [2].",
+      "claims": [
+        {
+          "claim": "The sliding window used to segment each gesture movement was 500 ms.",
+          "verdict": "supported",
+          "reason": "The passage states that the remaining 0.75 s signal was further partitioned using a 500 ms sliding window."
+        },
+        {
+          "claim": "The step size was 125 ms.",
+          "verdict": "supported",
+          "reason": "The passage states that the sliding window had a 125 ms step size."
+        }
+      ]
+    }
+  ]
+}
