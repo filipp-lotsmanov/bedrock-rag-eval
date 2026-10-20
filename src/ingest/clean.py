@@ -87,9 +87,7 @@ def remove_boilerplate(pages: list[Page]) -> list[Page]:
         return lines[:EDGE_LINES] + lines[-EDGE_LINES:]
 
     pages_per_key = Counter(
-        key
-        for lines in pages
-        for key in {_DIGITS.sub("#", line) for line in edge(lines)}
+        key for lines in pages for key in {_DIGITS.sub("#", line) for line in edge(lines)}
     )
     threshold = max(2, math.ceil(len(pages) / 2))
     boilerplate = {key for key, count in pages_per_key.items() if count >= threshold}
@@ -101,10 +99,7 @@ def remove_boilerplate(pages: list[Page]) -> list[Page]:
             [
                 line
                 for i, line in enumerate(lines)
-                if not (
-                    (i < EDGE_LINES or i >= last)
-                    and _DIGITS.sub("#", line) in boilerplate
-                )
+                if not ((i < EDGE_LINES or i >= last) and _DIGITS.sub("#", line) in boilerplate)
             ]
         )
     return cleaned
@@ -119,10 +114,7 @@ def remove_sidebar(first_page: Page) -> Page:
         (
             i
             for i in range(start + 1, len(first_page))
-            if (first_page[i - 1] + first_page[i])
-            .replace(" ", "")
-            .lower()
-            .endswith(SIDEBAR_END)
+            if (first_page[i - 1] + first_page[i]).replace(" ", "").lower().endswith(SIDEBAR_END)
         ),
         None,
     )
@@ -167,7 +159,5 @@ def clean_document(page_texts: list[str]) -> list[CleanPage]:
     pages = remove_boilerplate(pages)
     pages[0] = remove_sidebar(pages[0])
     pages = cut_back_matter(pages)
-    cleaned = (
-        CleanPage(number, unwrap(lines)) for number, lines in enumerate(pages, start=1)
-    )
+    cleaned = (CleanPage(number, unwrap(lines)) for number, lines in enumerate(pages, start=1))
     return [page for page in cleaned if page.text]

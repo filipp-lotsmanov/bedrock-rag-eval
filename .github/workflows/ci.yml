@@ -16,10 +16,10 @@ jobs:
   python:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Install uv
-        uses: astral-sh/setup-uv@v5
+        uses: astral-sh/setup-uv@v10.3.0
         with:
           enable-cache: true
           cache-dependency-glob: uv.lock
@@ -38,3 +38,42 @@ jobs:
 
       - name: Tests
         run: uv run pytest
+
+  terraform:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v10.3.0
+        with:
+          enable-cache: true
+          cache-dependency-glob: uv.lock
+
+      # validate reads the Lambda zips the configuration hashes, so they must exist.
+      - name: Build Lambda packages
+        run: |
+          uv run python scripts/build_lambda.py ingest
+          uv run python scripts/build_lambda.py query
+
+      - uses: hashicorp/setup-terraform@v4
+        with:
+          terraform_version: "<1.17.0"
+          terraform_wrapper: false
+
+      - name: Format check
+        run: terraform fmt -check -recursive infra
+
+      # No backend and no credentials: validate checks the configuration only.
+      - name: Validate
+        run: |
+          terraform -chdir=infra init -backend=false -input=false
+          terraform -chdir=infra validate
+
+  frontend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Syntax check
+        run: node --check frontend/app.js

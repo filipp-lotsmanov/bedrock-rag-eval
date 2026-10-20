@@ -76,3 +76,7 @@ Desktop.ini
 
 #Frontend config
 frontend/config.json
+
+#DemoVideos
+docs/demo1.mp4
+docs/demo2.mp4

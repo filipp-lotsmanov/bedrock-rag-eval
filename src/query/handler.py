@@ -74,12 +74,7 @@ def _question(event: Mapping[str, Any]) -> str:
 
 
 def _caller(event: Mapping[str, Any]) -> str:
-    claims = (
-        event.get("requestContext", {})
-        .get("authorizer", {})
-        .get("jwt", {})
-        .get("claims", {})
-    )
+    claims = event.get("requestContext", {}).get("authorizer", {}).get("jwt", {}).get("claims", {})
     return str(claims.get("sub", "unknown"))
 
 
