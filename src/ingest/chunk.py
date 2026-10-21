@@ -88,10 +88,18 @@ _SEGMENTER = pysbd.Segmenter(language="en", clean=False, char_span=True)
 
 
 def split_sentences(text: str) -> list[Sentence]:
-    """Sentence spans as character offsets into text, with surrounding whitespace excluded."""
-    sentences = []
+    """Sentence spans as character offsets into text, with surrounding whitespace excluded.
+
+    pysbd occasionally returns a span that starts inside the previous one (for example on
+    "alpha-syn ! ! ! Inc." with a Greek alpha); such a span is clipped to start where the
+    previous one ends, so spans never overlap and check_sentences() does not reject the
+    whole document.
+    """
+    sentences: list[Sentence] = []
     for span in _SEGMENTER.segment(text):
         start, end = int(span.start), int(span.end)
+        if sentences:
+            start = max(start, sentences[-1].end)
         segment = text[start:end]
         start += len(segment) - len(segment.lstrip())
         end -= len(segment) - len(segment.rstrip())

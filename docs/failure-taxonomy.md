@@ -13,7 +13,7 @@ corpus, 3 off-topic and 3 with a false premise.
 |---|---|---|---|---|---|
 | P1 | Parsing | Lost word spacing | PMC12756423 | Parser bake-off | Accepted |
 | P2 | Parsing | Spaces inserted inside words | PMC12794296 p1 | Manual inspection | Accepted |
-| P3 | Parsing | Some digits mis-extracted from glyph names | PMC12794296 | Parser bake-off | Accepted |
+| P3 | Parsing | Some digits mis-extracted from glyph names | PMC12794296 | Parser bake-off | Fixed (cleanup rule C7) |
 | R1 | Retrieval | Right page retrieved, answer sentence not | q17 | Nothing | Open (metric limitation) |
 | R2 | Retrieval | Reranker scores of answerable questions as low as off-topic ones | q10, q13, q22 | Score inspection | Design consequence |
 | G1 | Generation | Background statistic given instead of the study's own result | q17 | Nothing | Open |
@@ -25,7 +25,7 @@ corpus, 3 off-topic and 3 with a false premise.
 | E1 | Eval harness | Refusal-parsing bug undercounted correct abstentions | v0 run | Metric sanity check | Fixed |
 | E2 | Eval labels | Expected pages incomplete | labels v1 | Completeness pass | Fixed |
 | E3 | Eval harness | Skipped premise grade counted as a failure | ablation run | Metric sanity check | Fixed |
-| J1 | Judge | Judge accepts support from an uncited passage | probe c3 | Sensitivity test | Documented |
+| J1 | Judge | Judge accepts support from an uncited passage | probe c3 | Sensitivity test | Fixed |
 
 ## Parsing
 
@@ -39,17 +39,21 @@ undamaged papers (R2).
 **P2, inserted spaces.** On page 1 of the sEMG paper (PMC12794296), pypdf splits words ("reveale d",
 "sign als"). No eval answer was affected.
 
-**P3, glyph-name digits.** Some digits in PMC12794296 are not mapped from their glyph names (Adobe
-Glyph List suffixes). Details are in `docs/parser-bakeoff.md`. No eval answer was affected.
+**P3, glyph-name digits.** pypdf extracts some digits in PMC12794296 as glyph names such as
+`/two.tnum` instead of `2`. Details are in `docs/parser-bakeoff.md`. Fixed in ingest by cleanup
+rule C7, which maps `/zero.tnum` to `/nine.tnum` back to digits; the corpus test checks that no
+`.tnum` remains in the cleaned text. No eval answer was affected.
 
 pypdf was still chosen: 92.0% mean sentence recovery at the 0.95 threshold, against 7.9% for
 pdfplumber, whose defaults interleave the two-column layout.
 
 ## Retrieval
 
-**R1, right page, wrong chunk.** For q17, retrieval returned two chunks from page 1, the expected
-page, but neither contains the answer sentence ("Among 206 enrolled patients, 78 (37.86%)
-developed END"). page_hit counts this as a success. Page-level labels are too coarse to show
+**R1, right page, wrong chunk.** q17's answer appears on two pages: in the abstract on page 1
+("Among 206 enrolled patients, 78 (37.86%) developed END") and in the results on page 5, so
+labels v2 expect pages 1 and 5. Retrieval returned chunks from pages 1, 2, 8–9, 1–2 and 8–9:
+two of them cover page 1, but neither contains the answer sentence, and page 5 was not
+retrieved at all. page_hit counts this as a success. Page-level labels are too coarse to show
 whether the answering text was retrieved; this failure led directly to G1.
 
 **R2, reranker scores do not separate answerable from unanswerable questions.** Three answerable
@@ -74,8 +78,10 @@ The answer is grounded in its passage and still answers a different question.
 
 **G2, self-contradicting source.** For q19, the paper's results (p7) report that white matter
 fraction had the highest AUC (0.73), while its discussion (p8) calls CSF fraction optimal (AUC
-0.72). Both passages were shown to the model, and it repeated the discussion. The answer is
-grounded in a cited passage and contradicted by another.
+0.72). Both passages were shown to the model, and it repeated the discussion. The answer cites
+[1][2][3]: [3] is the discussion passage (p8), and [2], the results passage (p7), holds the 0.73
+that contradicts the answer. The answer therefore contradicts one of its own citations, and the
+judge still rated it supported.
 
 **G3, conflated sample units.** q04 answers 33 students per group. The cited passage says 66
 learners, 33 from each of two regions, were randomly assigned to the groups; a test-results table
@@ -118,11 +124,19 @@ including G1 to G4. A probe for "both groups" (s3) was dropped because its cited
 names a group, so it did not test what it intended. The judge was not calibrated against human
 grades.
 
+Fix: the judge now sees only the passages the answer cites, under their original numbers, and
+its id covers this message format, so its results are kept apart from these (judge id
+`e418671898ec`). In c3 the answer cites only [2], so passage [1], which holds the 125 ms the
+judge quoted, is no longer shown. Re-run on the same probes (judge id `1795aac11239`), the judge
+rated both c3 claims unsupported, caught 15 of 15 seeded errors (95% Wilson interval 0.80 to
+1.00) and passed 6 of 6 controls; on the v1 run it rated all 47 claims supported. Within one
+answer, a claim can still be rated against a passage that only another claim cites.
+
 ## Limitations
 
 The corpus has 10 clearly distinct papers, so retrieval reaches a ceiling: document hit rate is
 1.000 with or without the reranker. The reranker improved MRR only from 0.940 to 0.961, at about
-1.45 s against 0.95 s per question and a throughput limit of 2 questions per minute; its value on a
+1.50 s against 0.96 s per question and a throughput limit of 2 questions per minute; its value on a
 larger or more overlapping corpus is untested. The 40 questions were drafted by an LLM from the
 corpus, with every evidence quote machine-verified and every question reviewed by hand. Answer
 correctness against the answer sketches is not measured, which is why G1 to G3 pass every metric.

@@ -1,0 +1,5 @@
+{
+  "region": "eu-central-1",
+  "generation_model_id": "eu.amazon.nova-lite-v1:0",
+  "rerank_model_id": "amazon.rerank-v1:0"
+}

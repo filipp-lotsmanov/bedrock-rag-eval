@@ -1,0 +1,40 @@
+{
+  "judge_model": "eu.amazon.nova-pro-v1:0",
+  "judge_prompt_id": "1795aac11239",
+  "probes_judged": 21,
+  "seeded_caught": {
+    "numerator": 15,
+    "denominator": 15
+  },
+  "controls_passed": {
+    "passed": 6,
+    "total": 6
+  },
+  "by_type": {
+    "number": {
+      "passed": 3,
+      "total": 3
+    },
+    "entity": {
+      "passed": 3,
+      "total": 3
+    },
+    "direction": {
+      "passed": 3,
+      "total": 3
+    },
+    "scope": {
+      "passed": 3,
+      "total": 3
+    },
+    "citation": {
+      "passed": 3,
+      "total": 3
+    },
+    "control": {
+      "passed": 6,
+      "total": 6
+    }
+  },
+  "misses": []
+}

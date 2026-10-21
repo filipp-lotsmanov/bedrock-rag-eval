@@ -4,10 +4,13 @@
     uv run python scripts/judge_groundedness.py results/<run> --calibrate 20  # then hand-grade
 
 A judge model (Nova Pro, stronger than the Nova Lite it judges) splits each reply into claims
-and rates every claim against the passages that claim cites. Calibration shows you replies
-with the judge's verdicts hidden, records your verdicts, and reports how often you agree.
-Results go to results/<run>/judge_<prompt hash>.jsonl, so a changed judge prompt never mixes
-with earlier judgements. Abstentions are not judged: they make no claims.
+and rates every claim against the passages that claim cites. The judge is shown only the
+passages the reply cites, under their original numbers, so it cannot accept support from a
+passage the reply never cited. Calibration shows you replies with the judge's verdicts hidden,
+records your verdicts, and reports how often you agree. Results go to
+results/<run>/judge_<judge id>.jsonl; the id hashes the model, the prompt and the message
+format, so a changed judge never mixes with earlier judgements. Abstentions are not judged:
+they make no claims.
 """
 
 import argparse
@@ -33,11 +36,16 @@ ROOT = Path(__file__).resolve().parents[1]
 JUDGE_MODEL = "eu.amazon.nova-pro-v1:0"
 VERDICTS = ("supported", "partial", "unsupported")
 SHORT = {"s": "supported", "p": "partial", "u": "unsupported"}
+# Part of the judge id: change it whenever judge_message() changes what the judge sees.
+# Judge id e418671898ec (the committed results) was shown every retrieved passage.
+MESSAGE_FORMAT = "cited-passages-v1"
+_CITATION = re.compile(r"\[(\d+)\]")
 
-# [H] The judge prompt defines the groundedness metric: review it like the system prompt.
+# The judge prompt defines what "supported" means, so it is part of the judge id.
 JUDGE_PROMPT = """\
-You check whether an answer is supported by source passages. You receive numbered passages, \
-a question, and an answer that cites passages as [n].
+You check whether an answer is supported by source passages. You receive the passages the \
+answer cites, each under the number the answer uses for it, a question, and an answer that \
+cites passages as [n].
 
 Split the answer into its individual factual claims: usually one per sentence, but split a \
 sentence that makes several independent claims. Skip the token INSUFFICIENT_CONTEXT and \
@@ -58,7 +66,8 @@ Reply with JSON only, no other text:
 
 
 def prompt_id() -> str:
-    return hashlib.sha256(f"{JUDGE_MODEL}\n{JUDGE_PROMPT}".encode()).hexdigest()[:12]
+    payload = f"{JUDGE_MODEL}\n{MESSAGE_FORMAT}\n{JUDGE_PROMPT}"
+    return hashlib.sha256(payload.encode()).hexdigest()[:12]
 
 
 def judge_path(run_dir: Path) -> Path:
@@ -84,9 +93,21 @@ def answered(run_dir: Path, questions_path: Path) -> list[tuple[dict[str, Any], 
     ]
 
 
+def cited_numbers(text: str, passage_count: int) -> list[int]:
+    """Passage numbers the answer cites, ascending, ignoring numbers with no passage."""
+    return sorted(
+        {n for m in _CITATION.finditer(text) if 1 <= (n := int(m.group(1))) <= passage_count}
+    )
+
+
 def judge_message(question: str, result: dict[str, Any]) -> str:
-    passages = "\n\n".join(f"[{n}] {p['text']}" for n, p in enumerate(result["passages"], start=1))
-    return f"Passages:\n\n{passages}\n\nQuestion: {question}\n\nAnswer: {result['text']}"
+    """The cited passages only, under the numbers the answer uses for them."""
+    numbers = cited_numbers(result["text"], len(result["passages"]))
+    passages = "\n\n".join(f"[{n}] {result['passages'][n - 1]['text']}" for n in numbers)
+    return (
+        f"Passages:\n\n{passages or '(the answer cites no passage)'}\n\n"
+        f"Question: {question}\n\nAnswer: {result['text']}"
+    )
 
 
 def parse_claims(text: str) -> list[dict[str, Any]]:
@@ -98,9 +119,18 @@ def parse_claims(text: str) -> list[dict[str, Any]]:
     if not isinstance(claims, list):
         raise ValueError("judge reply has no claims list")
     for claim in claims:
-        if claim.get("verdict") not in VERDICTS or not str(claim.get("claim", "")).strip():
+        if (
+            not isinstance(claim, dict)
+            or claim.get("verdict") not in VERDICTS
+            or not str(claim.get("claim", "")).strip()
+        ):
             raise ValueError(f"malformed claim: {claim!r}")
-        claim["cited"] = [int(n) for n in claim.get("cited", [])]
+        cited = claim.get("cited", [])
+        if not isinstance(cited, list) or not all(
+            type(n) is int or (isinstance(n, str) and n.isdigit()) for n in cited
+        ):
+            raise ValueError(f"malformed cited list: {cited!r}")
+        claim["cited"] = [int(n) for n in cited]
     return claims
 
 

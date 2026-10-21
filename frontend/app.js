@@ -118,11 +118,11 @@ function linkOnHover(node, number) {
   }
 }
 
-function sourceItem(citation, passage) {
+function sourceItem(citation) {
   const pages = citation.page_start === citation.page_end
     ? `page ${citation.page_start}`
     : `pages ${citation.page_start}-${citation.page_end}`;
-  const score = passage ? Math.min(Math.max(passage.score, 0), 1) : 0;
+  const score = Math.min(Math.max(citation.score, 0), 1);
   const fill = el("div", { className: "fill" });
   fill.style.width = `${Math.max(score * 100, 2)}%`;
   const relevance = el("span", { className: "relevance", title: "Reranker relevance score, 0 to 1" }, [
@@ -143,7 +143,7 @@ function sourceItem(citation, passage) {
     ]),
     relevance,
   ]);
-  const quote = el("blockquote", { textContent: passage ? passage.text : "" });
+  const quote = el("blockquote", { textContent: citation.text });
   const item = el("li", { id: `source-${citation.number}` }, [el("details", {}, [summary, quote])]);
   linkOnHover(summary, citation.number);
   return item;
@@ -178,7 +178,7 @@ function renderAnswer(result) {
       }
     }
     for (const citation of result.citations) {
-      sources.append(sourceItem(citation, result.passages[citation.number - 1]));
+      sources.append(sourceItem(citation));
     }
   }
 

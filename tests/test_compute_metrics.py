@@ -164,3 +164,15 @@ def test_compute_writes_metrics_and_guards_labels(tmp_path: Path) -> None:
         cm.compute(good, questions, allow_label_change=False, grade=False)
     relabeled = cm.compute(good, questions, allow_label_change=True, grade=False)
     assert relabeled["labels_match_run"] is False
+
+
+def test_questions_with_several_expected_documents_are_refused(tmp_path: Path) -> None:
+    path = tmp_path / "questions.yaml"
+    entries = [
+        question("q1", "answerable", ["A"], [1]),
+        question("q2", "answerable", ["A", "B"], [1]),
+    ]
+    path.write_text(yaml.safe_dump(entries), encoding="utf-8")
+    run = {"run_id": "r", "questions_sha256": hashlib.sha256(path.read_bytes()).hexdigest()}
+    with pytest.raises(SystemExit, match="q2 expect more than one document"):
+        cm.load_questions(path, run, allow_label_change=False)

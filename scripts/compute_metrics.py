@@ -60,6 +60,8 @@ def overlaps(start: int, end: int, pages: list[int]) -> bool:
 
 
 def on_evidence(item: dict[str, Any], question: dict[str, Any]) -> bool:
+    """On an expected document and an expected page. expected_pages is not keyed by document,
+    which is only sound for one expected document; load_questions() enforces that."""
     return item["doc_id"] in question["expected_docs"] and overlaps(
         item["page_start"], item["page_end"], question["expected_pages"]
     )
@@ -133,7 +135,14 @@ def load_questions(
             "(pass --allow-label-change to score with the current labels)"
         )
     entries: list[dict[str, Any]] = yaml.safe_load(path.read_text(encoding="utf-8"))
-    return {e["id"]: e for e in entries if e["review"] != "dropped"}
+    questions = {e["id"]: e for e in entries if e["review"] != "dropped"}
+    multi = sorted(qid for qid, q in questions.items() if len(q.get("expected_docs", [])) > 1)
+    if multi:
+        raise SystemExit(
+            f"{path}: {', '.join(multi)} expect more than one document, but expected_pages is "
+            "not keyed by document, so a page of one paper could match another's"
+        )
+    return questions
 
 
 def grade_premises(

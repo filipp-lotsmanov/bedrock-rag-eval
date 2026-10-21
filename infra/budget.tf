@@ -11,7 +11,6 @@ resource "aws_budgets_budget" "monthly" {
   limit_unit   = "USD"
   time_unit    = "MONTHLY"
 
-  # Count spend before credits; with credits included, credit-covered usage shows as $0.
   cost_types {
     include_credit = false
   }

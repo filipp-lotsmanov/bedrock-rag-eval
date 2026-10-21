@@ -1,7 +1,7 @@
 # Query Lambda: retrieve with reranking, then generate with Nova Lite through the EU profile.
 
 data "aws_bedrock_inference_profile" "nova_lite" {
-  inference_profile_id = "eu.amazon.nova-lite-v1:0"
+  inference_profile_id = local.models.generation_model_id
 }
 
 resource "aws_cloudwatch_log_group" "query" {

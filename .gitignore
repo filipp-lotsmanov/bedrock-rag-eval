@@ -20,6 +20,10 @@ tfplan
 *.tfvars.json
 !*.tfvars.example
 
+# Backend settings for terraform init, such as the state bucket name.
+# Commit backend.hcl.example instead.
+infra/backend.hcl
+
 # Python
 __pycache__/
 *.py[cod]

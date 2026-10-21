@@ -58,10 +58,11 @@ def keys(s3: "S3Client", prefix: str = "") -> list[str]:
     return sorted(item["Key"] for item in response.get("Contents", []))
 
 
-def event(*object_keys: str) -> dict[str, Any]:
+def event(*object_keys: str, etag: str | None = None) -> dict[str, Any]:
+    obj = {} if etag is None else {"eTag": etag}
     return {
         "Records": [
-            {"s3": {"bucket": {"name": RAW}, "object": {"key": key}}} for key in object_keys
+            {"s3": {"bucket": {"name": RAW}, "object": {"key": key, **obj}}} for key in object_keys
         ]
     }
 
@@ -84,7 +85,9 @@ def test_writes_chunks_sidecars_and_manifest(s3: "S3Client") -> None:
     upload(s3)
     result = handler.main(event("PMC1.pdf"), None)
 
-    assert result == {"ingested": [{"doc_id": "PMC1", "chunks": 2, "deleted": 0}]}
+    assert result == {
+        "ingested": [{"doc_id": "PMC1", "chunks": 2, "deleted": 0, "superseded": False}]
+    }
     assert keys(s3) == [
         "chunks/PMC1/0000.txt",
         "chunks/PMC1/0000.txt.metadata.json",
@@ -112,7 +115,9 @@ def test_reingest_removes_stale_chunks_but_not_other_documents(s3: "S3Client") -
 
     result = handler.main(event("PMC1.pdf"), None)
 
-    assert result["ingested"] == [{"doc_id": "PMC1", "chunks": 2, "deleted": 5}]
+    assert result["ingested"] == [
+        {"doc_id": "PMC1", "chunks": 2, "deleted": 5, "superseded": False}
+    ]
     assert keys(s3, "chunks/PMC1/") == [
         "chunks/PMC1/0000.txt",
         "chunks/PMC1/0000.txt.metadata.json",
@@ -140,6 +145,72 @@ def test_manifest_is_written_last(s3: "S3Client", monkeypatch: pytest.MonkeyPatc
     handler.ingest_pdf(s3, RAW, "PMC1.pdf", PROCESSED)
     assert written[-1] == "manifests/PMC1.json"
     assert len(written) == 5
+
+
+@pytest.mark.usefixtures("two_chunks")
+def test_event_for_a_replaced_version_changes_nothing(s3: "S3Client") -> None:
+    upload(s3, body=b"%PDF- version 1")
+    old_etag = s3.head_object(Bucket=RAW, Key="PMC1.pdf")["ETag"].strip('"')
+    upload(s3, body=b"%PDF- version 2")
+    s3.put_object(Bucket=PROCESSED, Key="manifests/PMC1.json", Body=b"{}")
+
+    result = handler.main(event("PMC1.pdf", etag=old_etag), None)
+
+    assert result["ingested"] == [{"doc_id": "PMC1", "chunks": 0, "deleted": 0, "superseded": True}]
+    assert keys(s3) == ["manifests/PMC1.json"]
+
+
+@pytest.mark.usefixtures("two_chunks")
+def test_event_for_the_current_version_is_ingested(s3: "S3Client") -> None:
+    upload(s3)
+    etag = s3.head_object(Bucket=RAW, Key="PMC1.pdf")["ETag"].strip('"')
+    result = handler.main(event("PMC1.pdf", etag=etag), None)
+    assert result["ingested"][0]["superseded"] is False
+    assert "manifests/PMC1.json" in keys(s3)
+
+
+def test_upload_during_parsing_stops_before_deleting(
+    s3: "S3Client", monkeypatch: pytest.MonkeyPatch
+) -> None:
+    upload(s3, body=b"%PDF- version 1")
+    s3.put_object(Bucket=PROCESSED, Key="chunks/PMC1/0000.txt", Body=b"current")
+
+    def parse_while_replaced(pdf: bytes) -> list[Chunk]:
+        upload(s3, body=b"%PDF- version 2")
+        return [Chunk(0, "Stale chunk.", 1, 1)]
+
+    monkeypatch.setattr(handler, "pdf_to_chunks", parse_while_replaced)
+    summary = handler.ingest_pdf(s3, RAW, "PMC1.pdf", PROCESSED)
+    assert summary["superseded"] is True
+    assert keys(s3) == ["chunks/PMC1/0000.txt"]
+
+
+def test_upload_during_writing_withholds_the_manifest(
+    s3: "S3Client", monkeypatch: pytest.MonkeyPatch
+) -> None:
+    upload(s3, body=b"%PDF- version 1")
+    monkeypatch.setattr(handler, "pdf_to_chunks", lambda pdf: [Chunk(0, "v1 chunk.", 1, 1)])
+    original = handler.put_all
+
+    def put_then_replace(s3_: "S3Client", bucket: str, objects: Any) -> None:
+        original(s3_, bucket, objects)
+        upload(s3, body=b"%PDF- version 2")
+
+    monkeypatch.setattr(handler, "put_all", put_then_replace)
+    summary = handler.ingest_pdf(s3, RAW, "PMC1.pdf", PROCESSED)
+    assert summary == {"doc_id": "PMC1", "chunks": 1, "deleted": 0, "superseded": True}
+    assert "manifests/PMC1.json" not in keys(s3)
+
+
+def test_deleted_pdf_counts_as_replaced(s3: "S3Client", monkeypatch: pytest.MonkeyPatch) -> None:
+    upload(s3)
+
+    def parse_while_deleted(pdf: bytes) -> list[Chunk]:
+        s3.delete_object(Bucket=RAW, Key="PMC1.pdf")
+        return [Chunk(0, "Chunk.", 1, 1)]
+
+    monkeypatch.setattr(handler, "pdf_to_chunks", parse_while_deleted)
+    assert handler.ingest_pdf(s3, RAW, "PMC1.pdf", PROCESSED)["superseded"] is True
 
 
 @pytest.mark.usefixtures("two_chunks")

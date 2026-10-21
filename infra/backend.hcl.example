@@ -1,0 +1,3 @@
+# Copy to backend.hcl (git-ignored) and set the S3 bucket that holds the Terraform state.
+# Create the bucket first, in eu-central-1; versioning it lets you recover an earlier state.
+bucket = "<your-state-bucket>"

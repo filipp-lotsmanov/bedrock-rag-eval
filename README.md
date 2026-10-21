@@ -39,8 +39,8 @@ flowchart LR
     USER -- PKCE sign-in --> COG[Cognito]
     USER -- Bearer token --> API[API Gateway HTTP API<br/>JWT authorizer]
     API --> QL[Query Lambda]
-    QL -- retrieve --> VEC
-    QL --> RR[Amazon Rerank]
+    QL -- Retrieve --> KB
+    KB --> RR[Amazon Rerank]
     QL --> LLM[Nova Lite<br/>EU inference profile]
   end
 ```
@@ -50,13 +50,18 @@ with pypdf, applies cleanup rules, chunks it, and writes every chunk with a meta
 (document, DOI, pages, chunking `config_id`) plus a manifest per document. `scripts/sync_kb.py`
 then starts a Knowledge Base ingestion job, which embeds the chunks into S3 Vectors. The
 Knowledge Base uses no chunking of its own, so the index contains exactly the chunks the Lambda
-produced.
+produced. The `config_id` hashes the chunking settings, the extraction, cleanup and chunking
+code, and the pypdf and pysbd versions, and `sync_kb.py` refuses to sync chunks whose
+`config_id` differs from the current code's, so a pipeline change cannot reach the index
+without a re-ingest.
 
 **Query.** The browser signs in through Cognito's managed login (authorization code with PKCE)
 and calls `POST /query` with the access token. API Gateway verifies the token before the Lambda
-runs. The Lambda retrieves passages, reranks them with Amazon Rerank, and asks Nova Lite to
-answer from those passages only, citing each claim as `[n]`. A reply consisting of the refusal
-token is returned as an abstention. Bedrock throttling becomes HTTP 429.
+runs. The Lambda calls the Knowledge Base's `Retrieve` API, which runs the vector search and
+reranks the candidates with Amazon Rerank, then asks Nova Lite to answer from the top passages
+only, citing each claim as `[n]`. A reply that is the refusal token, is empty, or cites none of
+the passages is returned as an abstention, so every answer carries at least one valid citation.
+Bedrock throttling becomes HTTP 429 and a Bedrock timeout HTTP 504.
 
 **Infrastructure.** Everything is Terraform, with state in S3 using native locking. Lambdas run
 on arm64 and are built reproducibly from `uv.lock` with hashes. The frontend is one static page
@@ -89,6 +94,17 @@ hash.
 The eval set has 40 questions: 30 answerable, 4 on topics the corpus doesn't cover, 3
 off-topic, and 3 with a false premise. All runs use top-5 passages and labels v2 unless noted.
 
+| Run | Directory under `results/` | Labels at run time |
+|---|---|---|
+| v0 | `20261019T150117Z_156a0cee6ec0` | v1, rescored with v2 |
+| v1 | `20261019T194300Z_156a0cee6ec0` | v1, rescored with v2 |
+| vector-only ablation | `20261019T223318Z_a3da1668c2f7` | v2 |
+| v1 repeat | `20261020T161057Z_156a0cee6ec0` | v2 |
+
+Run names (v0, v1) and label versions (labels v1, v2) are numbered separately. The checks that
+abstain on empty or uncited replies were added after these runs; no reply in any run was empty
+or answered without a valid citation, so they would not change any result.
+
 **v0 to v1: fixing refusal parsing.** v0 missed refusals that came wrapped in citation markers.
 
 | Metric | v0 | v1 |
@@ -119,7 +135,7 @@ Most apparent retrieval misses were labelling gaps, not system failures.
 |---|---|---|
 | MRR | 0.940 | 0.961 |
 | every other metric | identical | identical |
-| latency per question | about 0.95 s | about 1.45 s |
+| latency per question | about 0.96 s | about 1.50 s |
 | throughput limit | about 20 per minute (Nova Lite) | 2 per minute (Rerank quota) |
 
 On ten clearly distinct papers, retrieval is at its ceiling either way. The reranker stays in
@@ -127,11 +143,17 @@ production as a deliberate choice: on a larger or more overlapping corpus, ranki
 what it buys, and the cost is throughput.
 
 **Groundedness.** A judge model (Nova Pro) splits each answer into claims and rates each claim
-against the passages it cites. It rated 45 of 45 claims supported. To check that this number
-means something, the judge was tested on 15 deliberately corrupted answers (changed numbers,
+against the passages it cites, and it is shown only the passages the answer cites. It rated all
+47 claims in the 33 answered replies of the v1 run supported. To check that this number means
+something, the judge was tested on 15 deliberately corrupted answers (changed numbers,
 entities, directions, scope and citations) and 6 meaning-preserving paraphrases. It caught
-**14 of 15** errors (95% Wilson interval 0.70 to 0.99) and passed all 6 controls. Its one miss
-was accepting support from a passage the claim didn't cite. The judge was not calibrated
+**15 of 15** errors (95% Wilson interval 0.80 to 1.00) and passed all 6 controls.
+
+The first version of the judge (id `e418671898ec`) was shown every retrieved passage. It caught
+14 of 15: it accepted a claim on the strength of a passage the answer never cited. Showing only
+the cited passages closed that gap without failing any control. The probes were drafted by an
+LLM (Claude), checked mechanically and read against their cited passages by the same LLM, but
+not reviewed by hand; each figure comes from a single run, and the judge was not calibrated
 against human grades.
 
 **Parser choice.** A bake-off against JATS XML ground truth: pypdf recovered 92.0% of sentences
@@ -174,10 +196,15 @@ and every other failure found, is written up in `docs/failure-taxonomy.md`, grou
 ## Security
 
 No long-lived credentials exist: the CLI uses short `aws login` sessions, and the IAM user has
-MFA. Each Lambda runs with a role scoped to the resources it uses. The API verifies the Cognito
+MFA. Each Lambda, and the Knowledge Base, runs with a role scoped to the resources it uses, with
+one exception: the Knowledge Base role's `bedrock:Rerank` permission is granted on all resources
+(`*`), while the model it may invoke is limited to Amazon Rerank. The API verifies the Cognito
 JWT before any Lambda runs, accounts are created by the owner only, and the page uses the PKCE
 flow, so no client secret reaches the browser. The site's bucket is private and readable only
-by its CloudFront distribution. The application stores no secrets.
+by its CloudFront distribution, which serves it with a Content-Security-Policy: the page runs
+only its own script and stylesheet and connects only to Cognito and the API. The API returns
+the answer and its cited passages, not retrieval internals such as storage locations. The
+application stores no secrets.
 
 ## Testing and CI
 
@@ -195,17 +222,17 @@ The corpus is small and its papers are clearly distinct, so retrieval is at a ce
 reranker's value is untested at scale. Forty questions give wide confidence intervals. The
 questions were drafted by an LLM from the corpus, with every evidence quote machine-verified
 against the cleaned text and every question reviewed by hand. Answer correctness is not
-measured. The judge does not enforce citation boundaries. `config_id` covers the chunking
-settings but not the text-cleanup rules, so a cleanup change is traceable only through the git
-commit. Throughput is limited to about two questions per minute.
+measured. The judge sees only the passages an answer cites, but within an answer a claim can
+still be rated against a passage that only another claim cites. Throughput is limited to about
+two questions per minute.
 
 
 ## Next steps
 
 - Score answers against the reference answers, the metric that would have caught the three
   wrong answers above.
-- Add a machine-checked evidence quote to the judge, so it cannot accept support from an
-  uncited passage.
+- Add a machine-checked evidence quote per claim to the judge, so a claim cannot borrow
+  support from a passage that only another claim in the same answer cites.
 - Label expected chunks rather than pages, so retrieval metrics see whether the answer sentence
   was retrieved.
 - Parse the JATS XML instead of the PDFs, removing the extraction defects entirely.
@@ -214,7 +241,7 @@ commit. Throughput is limited to about two questions per minute.
 ## Cost
 
 A question costs about **$0.0011**: $0.0010 for the rerank call and about $0.00013 for Nova
-Lite, at an average of 2,057 input and 32 output tokens per answer in the eval run, so
+Lite, at an average of 2,057 input and 32 output tokens per question in the v1 run, so
 reranking is nearly 90% of the cost per question. These are us-east-1 list prices;
 eu-central-1 rates can differ.
 
@@ -230,7 +257,7 @@ Cognito, CloudFront and CloudWatch cost nothing at this usage.
 | `src/ingest/` | Ingest Lambda: extract, clean, chunk, emit |
 | `src/query/` | Query Lambda: retrieve, rerank, generate, cite |
 | `infra/` | Terraform for every AWS resource |
-| `frontend/` | The static page (`index.html`, `app.js`) |
+| `frontend/` | The static page (`index.html`, `app.js`, `style.css`) |
 | `eval/` | The 40 questions and the judge probes |
 | `results/` | Every eval run with its raw replies, metrics and judgements |
 | `scripts/` | Corpus, ingest, eval and judge scripts, described below |
@@ -260,7 +287,8 @@ Nova Lite, Nova Pro, Titan Text Embeddings v2 and Amazon Rerank in `eu-central-1
 ```powershell
 uv sync --all-groups
 uv run python scripts/fetch_corpus.py   # defaults: Frontiers in Neuroscience, 2020-2025, 10 articles
-terraform -chdir=infra init
+cp infra/backend.hcl.example infra/backend.hcl   # then set your state bucket in it
+terraform -chdir=infra init -backend-config="backend.hcl"
 uv run python scripts/build_lambda.py ingest
 uv run python scripts/build_lambda.py query
 terraform -chdir=infra apply
@@ -269,8 +297,23 @@ uv run --group ingest python scripts/sync_kb.py --raw-bucket bedrock-rag-eval-ra
 uv run python scripts/run_eval.py       # about 20 minutes: Rerank allows 2 calls per minute
 uv run python scripts/compute_metrics.py results/<run> --grade
 uv run python scripts/judge_groundedness.py results/<run>
-uv run python scripts/judge_sensitivity.py results/<run>
+uv run python scripts/judge_sensitivity.py results/20261019T194300Z_156a0cee6ec0
 ```
+
+The judge probes in `eval/judge_probes.yaml` are edits of that run's replies, so
+`judge_sensitivity.py` accepts only that run directory.
+
+The committed v0 and v1 runs were made with labels v1. Rescoring them with the current labels
+needs `--allow-label-change`; reproducing the labels v1 column needs the old file:
+
+```powershell
+git show 5fd5b88:eval/questions.yaml > labels_v1.yaml
+uv run python scripts/compute_metrics.py results/20261019T194300Z_156a0cee6ec0 --questions labels_v1.yaml
+git checkout -- results/20261019T194300Z_156a0cee6ec0/metrics.json
+```
+
+`compute_metrics.py` writes `metrics.json` into the run directory, so the last line restores the
+committed labels v2 scores.
 
 The corpus search can return different papers later, since PMC adds and revises articles.
 Compare the downloaded files against the SHA-256 hashes in `manifest.csv` to confirm you have

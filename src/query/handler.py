@@ -14,9 +14,9 @@ from typing import TYPE_CHECKING, Any
 
 import boto3
 from botocore.config import Config
-from botocore.exceptions import ClientError
+from botocore.exceptions import ClientError, ConnectTimeoutError, ReadTimeoutError
 
-from query.answer import answer
+from query.answer import BadRequest, answer
 from query.config import DEFAULT_QUERY_CONFIG
 
 if TYPE_CHECKING:
@@ -26,9 +26,18 @@ if TYPE_CHECKING:
 # Bedrock throttles (Amazon Rerank allows 2 requests per minute) are answered with 429.
 THROTTLING = frozenset({"ThrottlingException", "TooManyRequestsException"})
 RETRY_AFTER_SECONDS = 30
-# Fail fast: API Gateway gives up after 30 seconds, so long client-side retries are pointless.
+# A request makes two calls (Retrieve, then Converse), each attempted once, so both together
+# must finish within the Lambda timeout (25 s, infra/query.tf), which API Gateway's 30 s limit
+# caps. A retry would also spend one of the two rerank calls allowed per minute; the caller
+# retries instead, on 429 or 504.
+LAMBDA_TIMEOUT_SECONDS = 25
+CALLS_PER_REQUEST = 2
+CONNECT_TIMEOUT_SECONDS = 2
+READ_TIMEOUT_SECONDS = 10
 _CLIENT_CONFIG = Config(
-    retries={"mode": "standard", "max_attempts": 2}, connect_timeout=5, read_timeout=20
+    retries={"mode": "standard", "max_attempts": 1},
+    connect_timeout=CONNECT_TIMEOUT_SECONDS,
+    read_timeout=READ_TIMEOUT_SECONDS,
 )
 
 logger = logging.getLogger(__name__)
@@ -53,10 +62,6 @@ def _response(
         "headers": {"content-type": "application/json", **(headers or {})},
         "body": json.dumps(body),
     }
-
-
-class BadRequest(Exception):
-    """The request body is not {"question": "..."}; answered with HTTP 400."""
 
 
 def _question(event: Mapping[str, Any]) -> str:
@@ -89,7 +94,7 @@ def main(event: Mapping[str, Any], _context: object) -> dict[str, Any]:
             _agent_runtime(),
             _bedrock_runtime(),
         )
-    except (BadRequest, ValueError) as error:
+    except BadRequest as error:
         logger.info("rejected request from %s: %s", caller, error)
         return _response(400, {"error": str(error)})
     except ClientError as error:
@@ -102,14 +107,18 @@ def main(event: Mapping[str, Any], _context: object) -> dict[str, Any]:
             {"error": "busy, retry shortly"},
             {"retry-after": str(RETRY_AFTER_SECONDS)},
         )
+    except (ConnectTimeoutError, ReadTimeoutError):
+        logger.warning("Bedrock timed out for %s", caller)
+        return _response(504, {"error": "timed out, retry shortly"})
     except Exception:
         logger.exception("query failed for %s", caller)
         return _response(500, {"error": "internal error"})
     logger.info(
-        "answered for %s: abstained=%s citations=%d usage=%s",
+        "answered for %s: abstained=%s citations=%d stop_reason=%s usage=%s",
         caller,
         result.abstained,
         len(result.citations),
+        result.stop_reason,
         result.usage,
     )
-    return _response(200, result.to_dict())
+    return _response(200, result.public_dict())

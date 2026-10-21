@@ -2,6 +2,7 @@ import json
 
 import pytest
 
+from ingest import emit
 from ingest.chunk import Chunk, ChunkingConfig
 from ingest.emit import (
     S3Object,
@@ -30,6 +31,15 @@ def test_config_id_is_stable_and_config_specific() -> None:
     assert config_id(CONFIG) != config_id(other)
     assert len(config_id(CONFIG)) == 12
     int(config_id(CONFIG), 16)
+
+
+def test_config_id_covers_code_and_package_versions(monkeypatch: pytest.MonkeyPatch) -> None:
+    fingerprint = emit.strategy_fingerprint()
+    assert set(fingerprint) == {"extract.py", "clean.py", "chunk.py", "pypdf", "pysbd"}
+    before = config_id(CONFIG)
+    for key in fingerprint:
+        monkeypatch.setattr(emit, "strategy_fingerprint", lambda k=key: fingerprint | {k: "x"})
+        assert config_id(CONFIG) != before, key
 
 
 def test_normalize_etag_strips_quotes() -> None:

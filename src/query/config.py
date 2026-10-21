@@ -3,9 +3,13 @@
 import hashlib
 import json
 from dataclasses import asdict, dataclass
+from pathlib import Path
 
-AMAZON_RERANK = "arn:aws:bedrock:eu-central-1::foundation-model/amazon.rerank-v1:0"
-NOVA_LITE = "eu.amazon.nova-lite-v1:0"
+# The region and model IDs, shared with Terraform (infra/providers.tf reads the same file),
+# so the code and the deployed infrastructure cannot disagree on them.
+MODELS = json.loads((Path(__file__).parent / "models.json").read_text(encoding="utf-8"))
+AMAZON_RERANK = f"arn:aws:bedrock:{MODELS['region']}::foundation-model/{MODELS['rerank_model_id']}"
+NOVA_LITE: str = MODELS["generation_model_id"]
 MAX_RESULTS = 100
 
 

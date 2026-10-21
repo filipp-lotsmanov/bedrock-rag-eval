@@ -1,17 +1,15 @@
 # Cognito issues the JWTs that the API's authorizer checks. Only the account owner creates users.
 
 locals {
-  # Local dev server and the CloudFront site; feeds the callback URLs here and CORS in api.tf.
+  # The CloudFront site only; feeds the callback and logout URLs here and CORS in api.tf.
   frontend_origins = [
-    "http://localhost:5173",
     "https://${aws_cloudfront_distribution.frontend.domain_name}",
   ]
   login_domain = "https://${aws_cognito_user_pool_domain.main.domain}.auth.${data.aws_region.current.region}.amazoncognito.com"
 }
 
 resource "aws_cognito_user_pool" "main" {
-  name = var.project
-  # Managed login needs Essentials or Plus; Essentials has a free tier.
+  name                = var.project
   user_pool_tier      = "ESSENTIALS"
   username_attributes = ["email"]
   mfa_configuration   = "OFF"
@@ -86,7 +84,6 @@ resource "aws_cognito_user_pool_client" "cli" {
   }
 }
 
-# Managed login (version 2) shows no page until the client has a branding style.
 resource "aws_cognito_managed_login_branding" "web" {
   client_id                   = aws_cognito_user_pool_client.web.id
   user_pool_id                = aws_cognito_user_pool.main.id

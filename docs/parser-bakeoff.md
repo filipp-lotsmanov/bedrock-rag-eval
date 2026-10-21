@@ -86,8 +86,10 @@ pypdf follows the order in which the PDF draws its text, and Frontiers PDFs draw
 
 ## Consequences for ingest
 
-1. **Use pypdf with `pypdf[fonts]`** in the ingest Lambda; drop pdfplumber.
-2. **Repair glyph names** after extraction, mapping suffixed names through the Adobe Glyph List (`fontTools.agl.toUnicode`). Validate with a `pypdf+repair` row in this bake-off: PMC12794296 should improve and no other article should change.
-3. **Test `extraction_mode="layout"`** against the lost-space defect on PMC12756423.
-4. **Strip running headers and footers** before chunking.
-5. **Exclude references and captions** from chunks, since recovery does not penalise them but retrieval would.
+What the bake-off recommended, and what `src/ingest` does:
+
+1. **Use pypdf with `pypdf[fonts]`** in the ingest Lambda. Done; pdfplumber remains only in the `bakeoff` dependency group, to reproduce this comparison.
+2. **Repair glyph names** after extraction. Done more narrowly than planned: the only suffixed glyph names in the corpus are the ten tabular digits, so cleanup rule C7 maps `/zero.tnum` to `/nine.tnum` with a regex instead of going through the Adobe Glyph List. No `pypdf+repair` row was added to the bake-off; the corpus test in `tests/test_clean.py` checks that no `.tnum` remains.
+3. **Test `extraction_mode="layout"`** against the lost-space defect on PMC12756423. Not done; the defect is accepted (P1 in `docs/failure-taxonomy.md`), since no eval answer was affected.
+4. **Strip running headers and footers** before chunking. Done: rule C1, plus C2 for the page-1 sidebar.
+5. **Exclude references and captions** from chunks. References are excluded: rule C3 cuts the back matter from the first back-matter heading, references included. Captions are not excluded and are chunked with the body text.

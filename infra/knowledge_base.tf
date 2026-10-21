@@ -6,7 +6,7 @@ data "aws_bedrock_foundation_model" "titan_v2" {
 }
 
 data "aws_bedrock_foundation_model" "amazon_rerank" {
-  model_id = "amazon.rerank-v1:0"
+  model_id = local.models.rerank_model_id
 }
 
 resource "aws_s3vectors_vector_bucket" "vectors" {

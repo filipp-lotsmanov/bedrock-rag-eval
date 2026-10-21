@@ -2,7 +2,7 @@ resource "aws_lambda_function" "ingest" {
   function_name    = "${var.project}-ingest"
   role             = aws_iam_role.ingest.arn
   handler          = "ingest.handler.main"
-  runtime          = "python3.12"
+  runtime          = "python${trimspace(file("${path.module}/lambda_python_version"))}"
   architectures    = ["arm64"]
   timeout          = 120
   memory_size      = 1024

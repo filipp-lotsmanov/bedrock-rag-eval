@@ -1,4 +1,4 @@
-"""The generation prompt. Rendering is complete; the system prompt wording is yours [H].
+"""The generation prompt. System prompt and passage rendering for the generation call.
 
 Contract the system prompt must establish, which answer.py relies on:
     - answer only from the numbered passages in the user message
@@ -12,8 +12,7 @@ from query.retrieve import Passage
 
 REFUSAL = "INSUFFICIENT_CONTEXT"
 
-# [H] Write the system prompt here. You will be asked to justify every instruction in it.
-SYSTEM_PROMPT: str | None = """\
+SYSTEM_PROMPT: str = """\
 You answer questions about a collection of neuroscience research papers, using only the \
 numbered passages provided with each question.
 

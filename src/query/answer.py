@@ -3,7 +3,10 @@
 Abstention happens in two places:
     - before generation, when nothing is retrieved or the top score is below
       config.abstain_below (off until the threshold is calibrated on the eval set)
-    - after generation, when the model replies with prompt.REFUSAL
+    - after generation, when the reply is empty, is prompt.REFUSAL, or cites no retrieved
+      passage, so every answer returned has at least one valid citation
+
+A reply cut off at config.max_tokens is still returned; stop_reason records it.
 """
 
 import re
@@ -20,6 +23,10 @@ if TYPE_CHECKING:
     from mypy_boto3_bedrock_runtime import BedrockRuntimeClient
 
 MAX_QUESTION_CHARS = 500
+
+
+class BadRequest(ValueError):
+    """The question or request body is invalid; the API answers it with HTTP 400."""
 
 
 @dataclass(frozen=True)
@@ -43,17 +50,38 @@ class Answer:
     config_id: str
     generation_model_id: str
     usage: dict[str, int] = field(default_factory=dict)
+    stop_reason: str | None = None
 
     def to_dict(self) -> dict[str, Any]:
+        """Everything, for eval runs and logs."""
         return asdict(self)
+
+    def public_dict(self) -> dict[str, Any]:
+        """What the API returns: the answer and its cited passages, without retrieval internals
+        (uncited passages, S3 locations, abstain reasons, token usage)."""
+        return {
+            "question": self.question,
+            "text": self.text,
+            "abstained": self.abstained,
+            "citations": [
+                asdict(c)
+                | {
+                    "text": self.passages[c.number - 1].text,
+                    "score": self.passages[c.number - 1].score,
+                }
+                for c in self.citations
+            ],
+            "config_id": self.config_id,
+            "generation_model_id": self.generation_model_id,
+        }
 
 
 def validate_question(question: str) -> str:
     question = question.strip()
     if not question:
-        raise ValueError("question is empty")
+        raise BadRequest("question is empty")
     if len(question) > MAX_QUESTION_CHARS:
-        raise ValueError(f"question is longer than {MAX_QUESTION_CHARS} characters")
+        raise BadRequest(f"question is longer than {MAX_QUESTION_CHARS} characters")
     return question
 
 
@@ -78,7 +106,7 @@ def answer(
 ) -> Answer:
     system_prompt = system_prompt or prompt.SYSTEM_PROMPT
     if not system_prompt:
-        raise RuntimeError("write the [H] system prompt in query/prompt.py")
+        raise RuntimeError("system prompt is empty")
     question = validate_question(question)
     passages = retrieve(agent_runtime, knowledge_base_id, question, config)
 
@@ -102,6 +130,7 @@ def answer(
             config.config_id,
             config.generation_model_id,
             usage,
+            None if generation is None else generation.stop_reason,
         )
 
     if not passages:
@@ -112,10 +141,14 @@ def answer(
     generation = generate(
         bedrock_runtime, system_prompt, prompt.user_message(question, passages), config
     )
+    if not generation.text:
+        return abstain(f"empty reply (stop_reason={generation.stop_reason})", generation)
     if is_refusal(generation.text):
         return abstain("model found the passages insufficient", generation)
 
     valid, invalid = parse_citations(generation.text, len(passages))
+    if not valid:
+        return abstain(f"reply cites no retrieved passage (invalid: {invalid})", generation)
     citations = [
         Citation(
             n,
@@ -141,4 +174,5 @@ def answer(
         config.config_id,
         config.generation_model_id,
         usage,
+        generation.stop_reason,
     )

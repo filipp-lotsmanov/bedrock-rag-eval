@@ -9,11 +9,14 @@ The handler writes the chunk objects first and the manifest last, so a manifest 
 exists once every chunk of that document is in place.
 """
 
+import functools
 import hashlib
 import json
 import re
 from collections.abc import Sequence
 from dataclasses import asdict, dataclass
+from importlib import metadata
+from pathlib import Path
 
 from ingest.chunk import Chunk, ChunkingConfig
 
@@ -21,6 +24,12 @@ CHUNK_PREFIX = "chunks"
 MANIFEST_PREFIX = "manifests"
 INDEX_WIDTH = 4
 _DOC_ID = re.compile(r"PMC\d+")
+# Chunk text depends on more than ChunkingConfig: on the extraction, cleanup and chunking code
+# and on the parser and sentence splitter. config_id covers all of them, so any change to chunk
+# output yields a new id. An edit that changes no output (a comment) does too; re-ingesting
+# after one is harmless.
+_STRATEGY_FILES = ("extract.py", "clean.py", "chunk.py")
+_STRATEGY_PACKAGES = ("pypdf", "pysbd")
 
 
 @dataclass(frozen=True)
@@ -30,9 +39,22 @@ class S3Object:
     content_type: str
 
 
+@functools.cache
+def strategy_fingerprint() -> dict[str, str]:
+    """Hashes of the code that produces chunks, and the versions of the packages it uses."""
+    here = Path(__file__).parent
+    code = {
+        name: hashlib.sha256((here / name).read_bytes()).hexdigest() for name in _STRATEGY_FILES
+    }
+    return code | {name: metadata.version(name) for name in _STRATEGY_PACKAGES}
+
+
 def config_id(config: ChunkingConfig) -> str:
-    """A short, stable hash of the chunking config, recorded with every chunk."""
-    payload = json.dumps(asdict(config), sort_keys=True).encode()
+    """A short, stable hash of the chunking strategy, recorded with every chunk: the config,
+    the code that applies it, and the package versions."""
+    payload = json.dumps(
+        {"config": asdict(config), "strategy": strategy_fingerprint()}, sort_keys=True
+    ).encode()
     return hashlib.sha256(payload).hexdigest()[:12]
 
 

@@ -7,8 +7,13 @@ terraform {
   }
 }
 
+# Region and model IDs, shared with the query code (src/query/config.py reads the same file).
+locals {
+  models = jsondecode(file("${path.module}/../src/query/models.json"))
+}
+
 provider "aws" {
-  region = "eu-central-1"
+  region = local.models.region
 
   default_tags {
     tags = {

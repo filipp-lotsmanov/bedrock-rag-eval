@@ -3,10 +3,10 @@ import json
 from typing import Any, cast
 
 import pytest
-from botocore.exceptions import ClientError
+from botocore.exceptions import ClientError, ConnectTimeoutError, ReadTimeoutError
 
 from query import handler, prompt
-from query.answer import MAX_QUESTION_CHARS, answer, is_refusal
+from query.answer import MAX_QUESTION_CHARS, BadRequest, answer, is_refusal
 from query.config import QueryConfig
 from query.generate import parse_citations
 from query.retrieve import retrieval_configuration, to_passage
@@ -42,23 +42,27 @@ class FakeAgentRuntime:
 
 
 class FakeBedrockRuntime:
-    def __init__(self, text: str) -> None:
+    def __init__(self, text: str, stop_reason: str = "end_turn") -> None:
         self.text = text
+        self.stop_reason = stop_reason
         self.calls: list[dict[str, Any]] = []
 
     def converse(self, **kwargs: Any) -> dict[str, Any]:
         self.calls.append(kwargs)
         return {
             "output": {"message": {"role": "assistant", "content": [{"text": self.text}]}},
-            "stopReason": "end_turn",
+            "stopReason": self.stop_reason,
             "usage": {"inputTokens": 900, "outputTokens": 60, "totalTokens": 960},
         }
 
 
 def run(
-    results: list[dict[str, Any]], reply: str, config: QueryConfig | None = None
+    results: list[dict[str, Any]],
+    reply: str,
+    config: QueryConfig | None = None,
+    stop_reason: str = "end_turn",
 ) -> tuple[Any, FakeAgentRuntime, FakeBedrockRuntime]:
-    agent, bedrock = FakeAgentRuntime(results), FakeBedrockRuntime(reply)
+    agent, bedrock = FakeAgentRuntime(results), FakeBedrockRuntime(reply, stop_reason)
     out = answer(
         "What does DSV do?",
         "KB",
@@ -139,6 +143,7 @@ def test_answer_maps_citations_to_passages() -> None:
     ]
     assert out.invalid_citations == [9]
     assert out.usage == {"input_tokens": 900, "output_tokens": 60}
+    assert out.stop_reason == "end_turn"
     sent = bedrock.calls[0]["messages"][0]["content"][0]["text"]
     assert "[1] (PMC1, pp. 3-4)" in sent and sent.endswith("Question: What does DSV do?")
     assert bedrock.calls[0]["system"] == [{"text": SYSTEM}]
@@ -162,6 +167,29 @@ def test_model_refusal_abstains_and_keeps_usage() -> None:
     assert out.usage["output_tokens"] == 60
 
 
+def test_empty_reply_abstains_with_its_stop_reason() -> None:
+    out, _, _ = run([result("PMC1", 0.9)], "   ", stop_reason="content_filtered")
+    assert out.abstained and out.text is None
+    assert "content_filtered" in str(out.abstain_reason)
+    assert out.stop_reason == "content_filtered" and out.usage["output_tokens"] == 60
+
+
+@pytest.mark.parametrize(
+    ("reply", "invalid"),
+    [("DSV induces it.", "[]"), ("DSV induces it [9].", "[9]"), ("DSV induces it [0].", "[0]")],
+)
+def test_reply_without_a_valid_citation_abstains(reply: str, invalid: str) -> None:
+    out, _, _ = run([result("PMC1", 0.9), result("PMC2", 0.7)], reply)
+    assert out.abstained and out.text is None and out.citations == []
+    assert out.abstain_reason == f"reply cites no retrieved passage (invalid: {invalid})"
+
+
+def test_truncated_reply_is_returned_and_marked() -> None:
+    out, _, _ = run([result("PMC1", 0.9)], "DSV induces it [1], and", stop_reason="max_tokens")
+    assert not out.abstained and out.text == "DSV induces it [1], and"
+    assert out.stop_reason == "max_tokens"
+
+
 def test_passages_are_sorted_and_capped_at_top_k() -> None:
     results = [
         result(f"PMC{i}", score) for i, score in enumerate([0.1, 0.9, 0.5, 0.7, 0.3, 0.8, 0.6])
@@ -172,7 +200,7 @@ def test_passages_are_sorted_and_capped_at_top_k() -> None:
 
 @pytest.mark.parametrize("question", ["", "   ", "x" * (MAX_QUESTION_CHARS + 1)])
 def test_invalid_questions_are_rejected(question: str) -> None:
-    with pytest.raises(ValueError):
+    with pytest.raises(BadRequest):
         answer(
             question,
             "KB",
@@ -222,6 +250,41 @@ def test_handler_answers(encoded: bool) -> None:
     assert body["citations"][0]["doc_id"] == "PMC1" and body["abstained"] is False
 
 
+def test_public_response_carries_cited_passages_only() -> None:
+    out, _, _ = run(
+        [result("PMC1", 0.9, text="first"), result("PMC2", 0.7, text="second", page=8.0)],
+        "DSV induces it [2].",
+    )
+    body = out.public_dict()
+    assert set(body) == {
+        "question",
+        "text",
+        "abstained",
+        "citations",
+        "config_id",
+        "generation_model_id",
+    }
+    assert body["citations"] == [
+        {
+            "number": 2,
+            "doc_id": "PMC2",
+            "doi": "10.1/PMC2",
+            "page_start": 8,
+            "page_end": 9,
+            "text": "second",
+            "score": 0.7,
+        }
+    ]
+    assert "s3://" not in json.dumps(body) and "first" not in json.dumps(body)
+
+
+def test_public_response_of_an_abstention_has_no_reason() -> None:
+    out, _, _ = run([result("PMC1", 0.9)], prompt.REFUSAL)
+    body = out.public_dict()
+    assert body["abstained"] is True and body["text"] is None and body["citations"] == []
+    assert "abstain_reason" not in body
+
+
 @pytest.mark.usefixtures("api")
 @pytest.mark.parametrize(
     "body", ["not json", "[]", '{"q": "x"}', json.dumps({"question": "x" * 600})]
@@ -242,6 +305,39 @@ def test_handler_hides_internal_errors(
     response = handler.main(event(json.dumps({"question": "q"})), None)
     assert response["statusCode"] == 500
     assert "secret" not in response["body"]
+
+
+def test_handler_internal_value_errors_are_500(
+    api: FakeBedrockRuntime, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    class Malformed(FakeAgentRuntime):
+        def retrieve(self, **kwargs: Any) -> dict[str, Any]:
+            raise ValueError("invalid literal for int() with base 10: 'x'")
+
+    monkeypatch.setattr(handler, "_agent_runtime", lambda: Malformed([]))
+    response = handler.main(event(json.dumps({"question": "q"})), None)
+    assert response["statusCode"] == 500
+    assert "invalid literal" not in response["body"]
+
+
+@pytest.mark.parametrize("error", [ReadTimeoutError, ConnectTimeoutError])
+def test_handler_turns_timeouts_into_504(
+    api: FakeBedrockRuntime,
+    monkeypatch: pytest.MonkeyPatch,
+    error: type[ReadTimeoutError | ConnectTimeoutError],
+) -> None:
+    class Slow(FakeAgentRuntime):
+        def retrieve(self, **kwargs: Any) -> dict[str, Any]:
+            raise error(endpoint_url="https://bedrock-agent-runtime")
+
+    monkeypatch.setattr(handler, "_agent_runtime", lambda: Slow([]))
+    response = handler.main(event(json.dumps({"question": "q"})), None)
+    assert response["statusCode"] == 504
+
+
+def test_client_timeouts_fit_in_the_lambda_timeout() -> None:
+    per_call = handler.CONNECT_TIMEOUT_SECONDS + handler.READ_TIMEOUT_SECONDS
+    assert handler.CALLS_PER_REQUEST * per_call < handler.LAMBDA_TIMEOUT_SECONDS
 
 
 @pytest.mark.parametrize("code", ["ThrottlingException", "TooManyRequestsException"])

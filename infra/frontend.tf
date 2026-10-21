@@ -19,14 +19,48 @@ resource "aws_cloudfront_origin_access_control" "frontend" {
   signing_protocol                  = "sigv4"
 }
 
-# Three small files: serving them uncached means a deploy never needs a cache invalidation.
+# Four small files: serving them uncached means a deploy never needs a cache invalidation.
 data "aws_cloudfront_cache_policy" "disabled" {
   name = "Managed-CachingDisabled"
 }
 
-# HSTS, nosniff, frame and referrer headers.
-data "aws_cloudfront_response_headers_policy" "security" {
-  name = "Managed-SecurityHeadersPolicy"
+# The managed SecurityHeadersPolicy's headers plus a Content-Security-Policy: the page may run
+# only its own script and stylesheet, and may connect only to itself (config.json), the Cognito
+# login domain (token exchange) and API Gateway. The API host is matched by wildcard because
+# naming it would form a cycle: the API's CORS settings already depend on this distribution.
+resource "aws_cloudfront_response_headers_policy" "security" {
+  name = "${var.project}-security"
+
+  security_headers_config {
+    content_security_policy {
+      content_security_policy = join("; ", [
+        "default-src 'none'",
+        "script-src 'self'",
+        "style-src 'self'",
+        "img-src 'self'",
+        "connect-src 'self' ${local.login_domain} https://*.execute-api.${data.aws_region.current.region}.amazonaws.com",
+        "base-uri 'none'",
+        "form-action 'none'",
+        "frame-ancestors 'none'",
+      ])
+      override = true
+    }
+    content_type_options {
+      override = true
+    }
+    frame_options {
+      frame_option = "DENY"
+      override     = true
+    }
+    referrer_policy {
+      referrer_policy = "strict-origin-when-cross-origin"
+      override        = true
+    }
+    strict_transport_security {
+      access_control_max_age_sec = 31536000
+      override                   = true
+    }
+  }
 }
 
 locals {
@@ -35,6 +69,7 @@ locals {
   frontend_files = {
     "index.html" = "text/html; charset=utf-8"
     "app.js"     = "text/javascript; charset=utf-8"
+    "style.css"  = "text/css; charset=utf-8"
   }
   # Read by app.js at startup, so no IDs or URLs are hardcoded in the page.
   frontend_config = {
@@ -64,7 +99,7 @@ resource "aws_cloudfront_distribution" "frontend" {
     cached_methods             = ["GET", "HEAD"]
     compress                   = true
     cache_policy_id            = data.aws_cloudfront_cache_policy.disabled.id
-    response_headers_policy_id = data.aws_cloudfront_response_headers_policy.security.id
+    response_headers_policy_id = aws_cloudfront_response_headers_policy.security.id
   }
 
   restrictions {

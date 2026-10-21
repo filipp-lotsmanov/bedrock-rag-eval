@@ -1,9 +1,11 @@
 """Sync the Knowledge Base once every uploaded PDF has a complete, current chunk set.
 
 Readiness, checked per PDF in the raw bucket:
+    - the key is named <doc_id>.pdf, and no two keys share a doc_id (they would share chunks)
     - manifests/<doc_id>.json exists and its pdf_etag matches the PDF's current ETag
     - chunks/<doc_id>/ holds exactly chunk_count texts and chunk_count sidecars
-    - every manifest has the same config_id (one chunking strategy across the index)
+    - every manifest's config_id is the one the current ingest code produces, so a pipeline
+      change that was not re-ingested is caught
     - no chunks/<doc_id>/ folder exists without its PDF (orphans would be embedded)
 
 Once ready, one ingestion job runs to completion, and its ID, statistics and the index
@@ -25,7 +27,8 @@ from typing import TYPE_CHECKING, Any
 
 import boto3
 
-from ingest.emit import CHUNK_PREFIX, chunk_prefix, manifest_key, normalize_etag
+from ingest.chunk import DEFAULT_CONFIG
+from ingest.emit import CHUNK_PREFIX, chunk_prefix, config_id, manifest_key, normalize_etag
 from ingest.handler import doc_id_from_key
 
 if TYPE_CHECKING:
@@ -58,12 +61,26 @@ def _chunk_folders(s3: "S3Client", bucket: str) -> set[str]:
 
 def check_ready(s3: "S3Client", raw_bucket: str, processed_bucket: str) -> Readiness:
     state = Readiness()
-    pdfs = {
-        doc_id_from_key(key): normalize_etag(etag)
-        for key, etag in _keys(s3, raw_bucket, "")
-        if key.endswith(".pdf")
-    }
-    if not pdfs:
+    expected_config = config_id(DEFAULT_CONFIG)
+    pdfs: dict[str, str] = {}
+    keys_by_doc: dict[str, list[str]] = {}
+    for key, etag in _keys(s3, raw_bucket, ""):
+        if not key.endswith(".pdf"):
+            continue
+        try:
+            doc_id = doc_id_from_key(key)
+        except ValueError:
+            state.problems.append(f"{key}: not named <doc_id>.pdf, so it is never ingested")
+            continue
+        pdfs[doc_id] = normalize_etag(etag)
+        keys_by_doc.setdefault(doc_id, []).append(key)
+    for doc_id, keys in sorted(keys_by_doc.items()):
+        if len(keys) > 1:
+            state.problems.append(
+                f"{doc_id}: uploaded as {', '.join(sorted(keys))}, which share chunks/{doc_id}/"
+            )
+            del pdfs[doc_id]
+    if not pdfs and not keys_by_doc:
         state.problems.append(f"no PDFs in {raw_bucket}")
     for doc_id, etag in sorted(pdfs.items()):
         try:
@@ -83,11 +100,14 @@ def check_ready(s3: "S3Client", raw_bucket: str, processed_bucket: str) -> Readi
                 f"{doc_id}: {texts} texts and {sidecars} sidecars, manifest says {manifest['chunk_count']}"
             )
             continue
+        if manifest["config_id"] != expected_config:
+            state.problems.append(
+                f"{doc_id}: chunked with config {manifest['config_id']}, the current ingest code "
+                f"gives {expected_config}; deploy it and re-upload with upload_corpus.py --force"
+            )
+            continue
         state.docs[doc_id] = manifest
-    config_ids = {m["config_id"] for m in state.docs.values()}
-    if len(config_ids) > 1:
-        state.problems.append(f"mixed chunking configs in the index: {sorted(config_ids)}")
-    for orphan in sorted(_chunk_folders(s3, processed_bucket) - set(pdfs)):
+    for orphan in sorted(_chunk_folders(s3, processed_bucket) - set(keys_by_doc)):
         state.problems.append(f"{orphan}: chunks exist but its PDF does not")
     return state
 

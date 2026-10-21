@@ -66,6 +66,15 @@ def test_split_sentences_handles_repeated_sentences() -> None:
     assert [s.start for s in sentences] == [0, 15, 30]
 
 
+def test_split_sentences_clips_overlapping_pysbd_spans() -> None:
+    # pysbd returns overlapping spans for this text: (0, 8) then (6, 10).
+    text = "\u03b1-syn ! ! ! Inc."
+    sentences = split_sentences(text)
+    assert all(a.end <= b.start for a, b in pairwise(sentences))
+    check_sentences(text, sentences, CONFIG)
+    assert chunk([CleanPage(1, text)], CONFIG)
+
+
 def test_config_rejects_inconsistent_values() -> None:
     with pytest.raises(ValueError):
         ChunkingConfig(target_chars=200, overlap_sentences=1, max_chars=100)
